@@ -48,6 +48,26 @@ def select_end_folder_doc():
     path_to_end_folder_doc = filedialog.askdirectory()
 
 
+def select_file_data_report():
+    """
+    Функция для выбора файла с данными на основе которых будет генерироваться документ
+    :return: Путь к файлу с данными
+    """
+    global name_file_data_report
+    # Получаем путь к файлу
+    name_file_data_report = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
+
+def select_end_folder_report():
+    """
+    Функция для выбора папки куда будут генерироваться файлы
+    :return:
+    """
+    global path_to_end_folder_report
+    path_to_end_folder_report = filedialog.askdirectory()
+
+
+
 def generate_docs_dpo():
     """
     Функция для создания ддокументов по ДПО
@@ -233,6 +253,25 @@ def generate_docs_other():
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
+# Функции для создания отчетов
+def create_report_one_pk():
+    """
+    Функция для создания отчета 1-ПК
+    :return:
+    """
+    pass
+
+def create_report_svod():
+    """
+    Функция для создания отчета по сводным показателям ЦОПП
+    :return:
+    """
+    pass
+
+
+
+
+
 
 if __name__ == '__main__':
     window = Tk()
@@ -252,7 +291,14 @@ if __name__ == '__main__':
     tab_control.add(tab_create_doc, text='Создание документов')
     tab_control.pack(expand=1, fill='both')
 
-    # Добавляем виджеты на вкладку
+    # Создаем вкладку создания отчетов
+    tab_create_report = ttk.Frame(tab_control)
+    tab_control.add(tab_create_report,text='Создание отчетов')
+    tab_control.pack(expand=1,fill='both')
+
+
+
+    # Добавляем виджеты на вкладку Создание документов
     # Создаем метку для описания назначения программы
     lbl_hello = Label(tab_create_doc,
                       text='Центр опережающей профессиональной подготовки Республики Бурятия\nГенерация документов по шаблону')
@@ -313,5 +359,51 @@ if __name__ == '__main__':
                                     command=generate_docs_other
                                     )
     btn_create_files_other.grid(column=0, row=8, padx=10, pady=10)
+
+# Добавляем виджеты на вкладку создания отчетов
+    lbl_hello = Label(tab_create_report,
+                      text='Центр опережающей профессиональной подготовки Республики Бурятия\nСоздание отчетов')
+    lbl_hello.grid(column=0, row=0, padx=10, pady=25)
+
+    # Картинка . Пришлось переименовывать переменную, иначе картинка не отображалась
+    path_to_img_report = resource_path('logo.png')
+    img_report = PhotoImage(file=path_to_img_report)
+    Label(tab_create_report,
+          image=img_report
+          ).grid(column=0, row=1, padx=10, pady=25)
+
+    # Создаем область для того чтобы поместить туда подготовительные кнопки(выбрать файл,выбрать папку и т.п.)
+    frame_data_for_report = LabelFrame(tab_create_report, text='Подготовка')
+    frame_data_for_report.grid(column=0, row=2, padx=10)
+
+    # Создаем кнопку Выбрать файл с данными
+    btn_data_report = Button(frame_data_for_report, text='1) Выберите файл с данными', font=('Arial Bold', 20),
+                               command=select_file_data_report
+                               )
+    btn_data_report.grid(column=0, row=3, padx=10, pady=10)
+
+    # Создаем кнопку для выбора папки куда будут генерироваться файлы
+
+    btn_choose_end_folder_report = Button(frame_data_for_report, text='2) Выберите конечную папку', font=('Arial Bold', 20),
+                                            command=select_end_folder_report
+                                            )
+    btn_choose_end_folder_report.grid(column=0, row=5, padx=10, pady=10)
+
+    # Создаем облать для размещения кнопок создания отчетов
+    frame_create_report = LabelFrame(tab_create_report, text='Создание отчетов')
+    frame_create_report.grid(column=0,row=6,padx=10)
+
+    # Создание сводного отчета по показателям ЦОПП
+
+    btn_report_svod = Button(frame_create_report, text='Создать сводный отчет', font=('Arial Bold', 20),
+                               command=create_report_svod
+                               )
+    btn_report_svod.grid(column=0,row=7,padx=10,pady=10)
+
+    btn_report_one_pk = Button(frame_create_report, text='Создать отчет 1-ПК', font=('Arial Bold', 20),
+                               command=create_report_one_pk
+                               )
+    btn_report_one_pk.grid(column=0,row=8,padx=10,pady=10)
+
 
     window.mainloop()
