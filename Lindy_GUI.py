@@ -84,7 +84,6 @@ def generate_docs_dpo():
         status_rb_type_doc = group_rb_type_doc.get()
         # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
         if status_rb_type_doc == 0:
-            print('Индивидуальный')
             try:
                 for row in data:
                     doc = DocxTemplate(name_file_template_doc)
@@ -102,7 +101,6 @@ def generate_docs_dpo():
                 messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
         else:
-            print('Групповой')
 
             # Создаем список в котором будет храниьт ФИО
             lst_students = []
@@ -138,6 +136,7 @@ def generate_docs_dpo():
 
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+
 
 
 def generate_docs_po():
@@ -276,7 +275,7 @@ def create_report_svod():
 if __name__ == '__main__':
     window = Tk()
     window.title('ЦОПП Бурятия')
-    window.geometry('650x860')
+    window.geometry('700x860')
     window.resizable(False, False)
 
     # path_to_icon = resource_path('favicon.ico')
@@ -296,6 +295,13 @@ if __name__ == '__main__':
     tab_control.add(tab_create_report,text='Создание отчетов')
     tab_control.pack(expand=1,fill='both')
 
+    # Создаем вкладку для Прочих операций
+    tab_create_other = ttk.Frame(tab_control)
+    tab_control.add(tab_create_other,text='Прочие операции')
+    tab_control.pack(expand=1,fill='both')
+
+
+
 
 
     # Добавляем виджеты на вкладку Создание документов
@@ -304,42 +310,46 @@ if __name__ == '__main__':
                       text='Центр опережающей профессиональной подготовки Республики Бурятия\nГенерация документов по шаблону')
     lbl_hello.grid(column=0, row=0, padx=10, pady=25)
 
-    # Переключатель:индивидуальный или списочный приказл
-    # Создаем переменную хранящую тип документа, в зависимости от значения будет использоваться та или иная функция
-    group_rb_type_doc = IntVar()
-
-    frame_rb_type_doc = LabelFrame(tab_create_doc, text='Выберите тип создаваемого документа')
-    frame_rb_type_doc.grid(column=0, row=1, padx=10)
-
-    Radiobutton(frame_rb_type_doc, text='Индивидуальные документы', variable=group_rb_type_doc, value=0).pack()
-    Radiobutton(frame_rb_type_doc, text='Списочный документ', variable=group_rb_type_doc, value=1).pack()
-
     # Картинка
     path_to_img = resource_path('logo.png')
     img = PhotoImage(file=path_to_img)
     Label(tab_create_doc,
           image=img
-          ).grid(column=0, row=2, padx=10, pady=25)
+          ).grid(column=1, row=0, padx=10, pady=25)
+
+    # Переключатель:индивидуальный или списочный приказл
+    # Создаем переменную хранящую тип документа, в зависимости от значения будет использоваться та или иная функция
+    group_rb_type_doc = IntVar()
+    # Создаем фрейм для размещения переключателей(pack и грид не используются в одном контейнере)
+    frame_rb_type_doc = LabelFrame(tab_create_doc, text='Выберите тип создаваемого документа')
+    frame_rb_type_doc.grid(column=0, row=1, padx=10)
+    #
+    Radiobutton(frame_rb_type_doc, text='Индивидуальные документы', variable=group_rb_type_doc, value=0).pack()
+    Radiobutton(frame_rb_type_doc, text='Списочный документ', variable=group_rb_type_doc, value=1).pack()
+
+    # Создаем область для того чтобы поместить туда подготовительные кнопки(выбрать файл,выбрать папку и т.п.)
+    frame_data_for_doc = LabelFrame(tab_create_doc, text='Подготовка')
+    frame_data_for_doc.grid(column=0, row=2, padx=10)
 
     # Создаем кнопку Выбрать шаблон
-    btn_template_contract = Button(tab_create_doc, text='1) Выберите шаблон документа', font=('Arial Bold', 20),
-                                   command=select_file_template_doc
-                                   )
-    btn_template_contract.grid(column=0, row=3, padx=10, pady=10)
-
+    btn_template_doc = Button(frame_data_for_doc, text='1) Выберите шаблон документа', font=('Arial Bold', 20),
+                              command=select_file_template_doc
+                              )
+    btn_template_doc.grid(column=0, row=3, padx=10, pady=10)
+    #
     # Создаем кнопку Выбрать файл с данными
-    btn_data_contract = Button(tab_create_doc, text='2) Выберите файл с данными', font=('Arial Bold', 20),
-                               command=select_file_data_doc
-                               )
-    btn_data_contract.grid(column=0, row=4, padx=10, pady=10)
-
+    btn_data_doc = Button(frame_data_for_doc, text='2) Выберите файл с данными', font=('Arial Bold', 20),
+                          command=select_file_data_doc
+                          )
+    btn_data_doc.grid(column=0, row=4, padx=10, pady=10)
+    #
     # Создаем кнопку для выбора папки куда будут генерироваться файлы
 
-    btn_choose_end_folder_contract = Button(tab_create_doc, text='3) Выберите конечную папку', font=('Arial Bold', 20),
-                                            command=select_end_folder_doc
-                                            )
-    btn_choose_end_folder_contract.grid(column=0, row=5, padx=10, pady=10)
-
+    btn_choose_end_folder_doc = Button(frame_data_for_doc, text='3) Выберите конечную папку', font=('Arial Bold', 20),
+                                       command=select_end_folder_doc
+                                       )
+    btn_choose_end_folder_doc.grid(column=0, row=5, padx=10, pady=10)
+    #
     # Создаем кнопку для запуска функции генерации файлов ДПО
 
     btn_create_files_dpo = Button(tab_create_doc, text='Создать документы ДПО', font=('Arial Bold', 20),
@@ -354,7 +364,7 @@ if __name__ == '__main__':
     btn_create_files_po.grid(column=0, row=7, padx=10, pady=10)
 
     # Создаем кнопку для создания документов из таблиц с произвольной структурой
-    btn_create_files_other = Button(tab_create_doc, text='Создать документы из произвольной таблицы',
+    btn_create_files_other = Button(tab_create_doc, text='Создать документы\n из произвольной таблицы',
                                     font=('Arial Bold', 20),
                                     command=generate_docs_other
                                     )
@@ -370,7 +380,7 @@ if __name__ == '__main__':
     img_report = PhotoImage(file=path_to_img_report)
     Label(tab_create_report,
           image=img_report
-          ).grid(column=0, row=1, padx=10, pady=25)
+          ).grid(column=1, row=0, padx=10, pady=25)
 
     # Создаем область для того чтобы поместить туда подготовительные кнопки(выбрать файл,выбрать папку и т.п.)
     frame_data_for_report = LabelFrame(tab_create_report, text='Подготовка')
@@ -404,6 +414,24 @@ if __name__ == '__main__':
                                command=create_report_one_pk
                                )
     btn_report_one_pk.grid(column=0,row=8,padx=10,pady=10)
+
+
+    #размещаем виджеты на вкладке Прочее
+    lbl_hello = Label(tab_create_other,
+                      text='Центр опережающей профессиональной подготовки Республики Бурятия\nПрочие операции')
+    lbl_hello.grid(column=0, row=0, padx=10, pady=25)
+
+    # Картинка . Пришлось переименовывать переменную, иначе картинка не отображалась
+    path_to_img_other = resource_path('logo.png')
+    img_other = PhotoImage(file=path_to_img_report)
+    Label(tab_create_other,
+          image=img_other
+          ).grid(column=1, row=0, padx=10, pady=25)
+
+
+
+
+
 
 
     window.mainloop()
