@@ -6,6 +6,8 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
+import openpyxl
+import time
 
 
 def resource_path(relative_path):
@@ -27,6 +29,16 @@ def select_file_template_doc():
     global name_file_template_doc
     name_file_template_doc = filedialog.askopenfilename(
         filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
+
+def select_file_template_table():
+    """
+    Функция для выбора шаблона для создания общей таблицы
+    :return:
+    """
+    global name_file_template_table
+    # Получаем путь к файлу
+    name_file_template_table = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
 
 
 def select_file_data_doc():
@@ -65,6 +77,16 @@ def select_end_folder_report():
     """
     global path_to_end_folder_report
     path_to_end_folder_report = filedialog.askdirectory()
+
+
+def select_files_data_other():
+    """
+    Функция для выбора файлов с данными при выполнении прочих операций
+    :return:
+    """
+    # Создаем глобальную переменную, дада я знаю что надо все сделать в виде классов.Потом когда нибудь
+    global names_files_data_other
+    names_files_data_other = filedialog.askopenfilenames(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
 
 
 
@@ -267,9 +289,46 @@ def create_report_svod():
     """
     pass
 
+def create_general_table():
+    """
+    Функция для создания общей таблицы с данными всех групп из множества отдельных таблицы на каждую группу
+    :return:
+    """
+    try:
+        # Получаем базовые датафреймы
+        df_dpo = pd.read_excel(name_file_template_table,sheet_name='ДПО')
+        df_po = pd.read_excel(name_file_template_table,sheet_name='ПО')
 
+        # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
+        for file in names_files_data_other:
+            # Создаем промежуточный датафрейм с данными с листа ДПО
+            temp_dpo = pd.read_excel(file, sheet_name='ДПО')
+            # Создаем промежуточный датафрейм с данными с листа ДПО
+            temp_po = pd.read_excel(file, sheet_name='ПО')
+            # Добавляем промежуточные датафреймы в исходные
+            df_dpo = df_dpo.append(temp_dpo, ignore_index=True)
+            df_po = df_po.append(temp_po, ignore_index=True)
 
+        # Код сохранения датафрейма в разные листы и сохранением форматирования  взят отсюда https://azzrael.ru/python-pandas-openpyxl-excel
+        wb = openpyxl.load_workbook(name_file_template_table)
+        # Записываем лист ДПО
+        for ir in range(0, len(df_dpo)):
+            for ic in range(0, len(df_dpo.iloc[ir])):
+                wb['ДПО'].cell(2 + ir, 1 + ic).value = df_dpo.iloc[ir][ic]
+        # Записываем лист ПО
+        for ir in range(0, len(df_po)):
+            for ic in range(0, len(df_po.iloc[ir])):
+                wb['ПО'].cell(2 + ir, 1 + ic).value = df_po.iloc[ir][ic]
+        # Получаем текущее время для того чтобы использовать в названии
 
+        t = time.localtime()
+        current_time = time.strftime('%d_%m_%y', t)
+        #Сохраняем итоговый файл
+        wb.save(f'{path_to_end_folder_doc}/Общая таблица слушателей ЦОПП от {current_time}.xlsx')
+    except:
+        messagebox.showerror('ЦОПП Бурятия','Возникла ошибка,проверьте шаблон таблицы\nДобавляемы файлы должны иметь одинаковую структуру с шаблоном таблицы')
+    else:
+        messagebox.showinfo('ЦОПП Бурятия','Общая таблица успешно создана!')
 
 
 if __name__ == '__main__':
@@ -428,6 +487,33 @@ if __name__ == '__main__':
           image=img_other
           ).grid(column=1, row=0, padx=10, pady=25)
 
+    # Создаем область для того чтобы поместить туда подготовительные кнопки(выбрать файл,выбрать папку и т.п.)
+    frame_data_for_other = LabelFrame(tab_create_other, text='Подготовка')
+    frame_data_for_other.grid(column=0, row=2, padx=10)
+
+    # Создаем кнопку для выбора шаблона таблицы
+    btn_table_other_template = Button(frame_data_for_other, text='Выберите шаблон таблицы', font=('Arial Bold', 20),
+                              command=select_file_template_table
+                              )
+    btn_table_other_template.grid(column=0, row=3, padx=10, pady=10)
+
+    # Создаем кнопку Выбрать файлы с данными
+    btn_data_other = Button(frame_data_for_other, text='Выберите файлы с данными', font=('Arial Bold', 20),
+                              command=select_files_data_other
+                              )
+    btn_data_other.grid(column=0, row=4, padx=10, pady=10)
+    #
+    btn_choose_end_folder_doc = Button(frame_data_for_other, text='Выберите конечную папку', font=('Arial Bold', 20),
+                                       command=select_end_folder_doc
+                                       )
+    btn_choose_end_folder_doc.grid(column=0, row=5, padx=10, pady=10)
+
+    # Кнопка создать общую таблицу
+
+    btn_create_general_table = Button(tab_create_other, text='Создать общую таблицу', font=('Arial Bold', 20),
+                               command=create_general_table
+                               )
+    btn_create_general_table.grid(column=0,row=6,padx=10,pady=10)
 
 
 
