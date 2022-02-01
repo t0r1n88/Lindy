@@ -152,7 +152,6 @@ def generate_docs_po():
         status_rb_type_doc = group_rb_type_doc.get()
         # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
         if status_rb_type_doc == 0:
-            print('Индивидуальный')
             try:
                 for row in data:
                     doc = DocxTemplate(name_file_template_doc)
@@ -172,7 +171,6 @@ def generate_docs_po():
                 messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
         else:
-            print('Групповой')
 
             # Создаем список в котором будет хранить ФИО
             lst_students = []
