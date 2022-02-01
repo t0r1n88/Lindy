@@ -95,70 +95,45 @@ def generate_docs_dpo():
     Функция для создания ддокументов по ДПО
     :return:
     """
-    try:
-        # Считываем данные с листа ДПО в указанной таблице
-        df = pd.read_excel(name_file_data_doc, sheet_name='ДПО')
+    # Считываем данные с листа ДПО в указанной таблице
+    df = pd.read_excel(name_file_data_doc, sheet_name='ДПО')
 
-        # Конвертируем датафрейм в список словарей
-        data = df.to_dict('records')
+    # Конвертируем датафрейм в список словарей
+    data = df.to_dict('records')
 
-        # Создаем переменную для типа создаваемого документа
-        status_rb_type_doc = group_rb_type_doc.get()
-        # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
-        if status_rb_type_doc == 0:
-            try:
-                for row in data:
-                    doc = DocxTemplate(name_file_template_doc)
-                    context = row
-                    # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+    # Создаем переменную для типа создаваемого документа
+    status_rb_type_doc = group_rb_type_doc.get()
+    # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
+    if status_rb_type_doc == 0:
+        for row in data:
+            doc = DocxTemplate(name_file_template_doc)
+            context = row
+            # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
 
-                    doc.render(context)
+            doc.render(context)
 
-                    doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
-            except:
-                messagebox.showerror('ЦОПП Бурятия','Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
-                exit()
+            doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
+        messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
-            else:
-                messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+    else:
 
-        else:
+        # Создаем список в котором будет храниьт ФИО
+        lst_students = []
 
-            # Создаем список в котором будет храниьт ФИО
-            lst_students = []
-
-            # Итеруемся по списку словарей, чтобы получить список ФИО
-            try:
-                for row in data:
-                    lst_students.append(row['ФИО_именительный'])
-                # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
-                context = data[0]
-                # Создаем в context  пару ключ:значение lst_studenst:список студентов
-                context['lst_students'] = lst_students
-                # Загружаем шаблон
-                doc = DocxTemplate(name_file_template_doc)
-
-                # Создаем документ
-                doc.render(context)
-                # сохраняем документ
-                doc.save(f'{path_to_end_folder_doc}/{context["Порядковый_номер_группы"]}.docx')
-            except KeyError:
-                messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
-                exit()
-
-            except OSError:
-                messagebox.showerror('ЦОПП Бурятия','Закройте открытый файл Word')
-                exit()
-            except:
-                messagebox.showerror('ЦОПП Бурятия',
-                                     'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
-                exit()
-            else:
-                messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
-
-    except NameError as e:
-        messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
-
+        # Итеруемся по списку словарей, чтобы получить список ФИО
+        for row in data:
+            lst_students.append(row['ФИО_именительный'])
+        # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
+        context = data[0]
+        # Создаем в context  пару ключ:значение lst_studenst:список студентов
+        context['lst_students'] = lst_students
+        # Загружаем шаблон
+        doc = DocxTemplate(name_file_template_doc)
+        # Создаем документ
+        doc.render(context)
+        # сохраняем документ
+        doc.save(f'{path_to_end_folder_doc}/Приказ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
+        messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
 
 def generate_docs_po():
@@ -216,7 +191,7 @@ def generate_docs_po():
                 # Создаем документ
                 doc.render(context)
                 # сохраняем документ
-                doc.save(f'{path_to_end_folder_doc}/{context["Порядковый_номер_группы"]}.docx')
+                doc.save(f'{path_to_end_folder_doc}/Приказ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
                 exit()
