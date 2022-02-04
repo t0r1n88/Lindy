@@ -79,9 +79,38 @@ def counting_total_sex(dpo,po):
     sum_general_total_sex = general_total_sex.groupby(['Пол']).sum().reset_index()
     return sum_general_total_sex
 
+def counting_age_distribution(dpo,po):
+    """
+    Функция для подсчета количества обучающихся по возрастным категориям
+    :param dpo: датафрейм ДПО
+    :param po: датафрейм ПО
+    :return: датафрейм сводной таблицы
+    """
+    #Создаем сводные таблицы
+    dpo_age_distribution = pd.pivot_table(dpo,index=['Возрастная_категория'],
+                                          values=['ФИО_именительный'],
+                                          aggfunc='count')
+    po_age_distribution = pd.pivot_table(po,index=['Возрастная_категория'],
+                                          values=['ФИО_именительный'],
+                                          aggfunc='count')
+    # Извлекам индексы
+    dpo_age_distribution = dpo_age_distribution.reset_index()
+    po_age_distribution = po_age_distribution.reset_index()
+    # Меняем колонки
+    dpo_age_distribution.columns = ['Возрастная_категория','Количество']
+    po_age_distribution.columns = ['Возрастная_категория','Количество']
+
+    #Создаем единую сводную таблицу
+    general_age_distribution = pd.concat([dpo_age_distribution,po_age_distribution],ignore_index=True)
+    #Повторно группируем чтобы соединить категории из обеих таблиц
+    general_age_distribution = general_age_distribution.groupby(['Возрастная_категория']).sum().reset_index()
+
+    return general_age_distribution
+
+
 # Загружаем датафреймы
-dpo_df = pd.read_excel('data/Тестовая общая таблица.xlsx', sheet_name='ДПО')
-po_df = pd.read_excel('data/Тестовая общая таблица.xlsx', sheet_name='ПО')
+dpo_df = pd.read_excel('data/Общая таблица.xlsx', sheet_name='ДПО')
+po_df = pd.read_excel('data/Общая таблица.xlsx', sheet_name='ПО')
 
 # Заполняем пустые поля для удобства группировки
 dpo_df = dpo_df.fillna('Не заполнено!!!')
@@ -147,6 +176,17 @@ max_column = wb.active.max_column
 min_row = wb.active.min_row
 max_row = wb.active.max_row
 
+# Добавляем таблицу с разбиением по возрастам
+sheet[f'A{max_row+2}'] = 'Общее распределение обучающихся по возрасту'
+age_distribution = counting_age_distribution(dpo_df,po_df)
+print(age_distribution)
+for row in age_distribution.values.tolist():
+    sheet.append(row)
+
+min_column = wb.active.min_column
+max_column = wb.active.max_column
+min_row = wb.active.min_row
+max_row = wb.active.max_row
 
 sheet.column_dimensions['A'].width = 50
 sheet.column_dimensions['B'].width = 30
