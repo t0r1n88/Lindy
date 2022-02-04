@@ -8,6 +8,8 @@ from tkinter import messagebox
 from tkinter import ttk
 import openpyxl
 import time
+from openpyxl.chart import PieChart,Reference
+
 
 
 def resource_path(relative_path):
@@ -274,13 +276,11 @@ def create_report_svod():
 
         # Получение общего количества прошедших обучение,количества прошедших по ДПО,по ПО
         total_students, total_students_dpo, total_students_po = counting_total_student(dpo_df, po_df)
-        print(total_students, total_students_dpo, total_students_po)
 
         # Количество обучившихся ДПО и ПО
 
         # Получение количества обучившихся по видам
         df_counting_type_and_name_trainning = counting_type_of_training(dpo_df, po_df)
-        print(df_counting_type_and_name_trainning)
 
         # Создаем новый excel файл
         wb = openpyxl.Workbook()
@@ -301,14 +301,39 @@ def create_report_svod():
         sheet['B3'] = total_students_po
         sheet['B4'] = total_students
 
+        # Добавляем круговую диаграмму
+        pie_main = PieChart()
+        labels = Reference(sheet,min_col=1,min_row=2,max_row=3)
+        data = Reference(sheet,min_col=2,min_row=1,max_row=3)
+        pie_main.add_data(data,titles_from_data=True)
+        pie_main.set_categories(labels)
+        sheet.add_chart(pie_main,'F2')
         # # Добавляем таблицу с по направлениям
 
         sheet['A7'] = 'Вид обучения'
         sheet['B7'] = 'Название программы'
-        sheet['C7'] = 'Количество'
+        sheet['C7'] = 'Количество обучающихся'
+
 
         for row in df_counting_type_and_name_trainning.values.tolist():
             sheet.append(row)
+        # Получаем последние активные ячейки чтобы записывалось по порядку и не налазило друг на друга
+        min_column = wb.active.min_column
+        max_column = wb.active.max_column
+        min_row = wb.active.min_row
+        max_row = wb.active.max_row
+
+        sheet[f'A{max_row + 2}'] = 'Общее распределение прошедших обучение по полу'
+        total_sex = counting_total_sex(dpo_df, po_df)
+        # Добавляем в файл таблицу с распределением по полам
+        for row in total_sex.values.tolist():
+            sheet.append(row)
+
+        # Получаем последние активные ячейки чтобы записывалось по порядку и не налазило друг на друга
+        min_column = wb.active.min_column
+        max_column = wb.active.max_column
+        min_row = wb.active.min_row
+        max_row = wb.active.max_row
 
         sheet.column_dimensions['A'].width = 50
         sheet.column_dimensions['B'].width = 30
@@ -415,6 +440,32 @@ def counting_type_of_training(dpo,po):
                                                ignore_index=True)
     return general_svod_category_and_name
 
+def counting_total_sex(dpo,po):
+    """
+    Функция для подсчета количества мужчин и женщин
+    :param dpo: датафрейм ДПО
+    :param po: датафрейм ПО
+    :return: датафрейм сводной таблицы
+    """
+    # Создаем сводные таблицы
+    dpo_total_sex = pd.pivot_table(dpo,index=['Пол_получателя'],
+                                   values=['ФИО_именительный'],
+                                   aggfunc='count')
+    po_total_sex = pd.pivot_table(po,index=['Пол_получателя'],
+                                  values=['ФИО_именительный'],
+                                  aggfunc='count')
+    # Извлекаем индексы
+    dpo_total_sex = dpo_total_sex.reset_index()
+    po_total_sex = po_total_sex.reset_index()
+    #Переименовываем колонки
+    dpo_total_sex.columns = ['Пол','Количество']
+    po_total_sex.columns = ['Пол','Количество']
+
+    # Соединяем в единую таблицу
+    general_total_sex = pd.concat([dpo_total_sex,po_total_sex],ignore_index=True)
+    #Группируем по полю Пол чтобы суммировать значения
+    sum_general_total_sex = general_total_sex.groupby(['Пол']).sum().reset_index()
+    return sum_general_total_sex
 
 
 if __name__ == '__main__':
