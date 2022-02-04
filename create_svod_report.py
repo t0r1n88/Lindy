@@ -2,8 +2,8 @@ import pandas as pd
 import openpyxl
 import time
 from openpyxl.styles import Font
-
-from openpyxl.chart import BarChart, Reference
+from openpyxl.chart.label import DataLabelList
+from openpyxl.chart import BarChart, Reference,PieChart,PieChart3D,Series
 from copy import deepcopy
 
 
@@ -147,7 +147,13 @@ sheet['B1'] = 'Количество обучающихся'
 sheet['B2'] = total_students_dpo
 sheet['B3'] = total_students_po
 sheet['B4'] = total_students
-
+# Добавляем круговую диаграмму
+pie_main = PieChart()
+labels = Reference(sheet, min_col=1, min_row=2, max_row=3)
+data = Reference(sheet, min_col=2, min_row=1, max_row=3)
+pie_main.add_data(data, titles_from_data=True)
+pie_main.set_categories(labels)
+sheet.add_chart(pie_main, 'F2')
 # # Добавляем таблицу с по направлениям
 
 sheet['A7'] = 'Вид обучения'
@@ -178,10 +184,40 @@ max_row = wb.active.max_row
 
 # Добавляем таблицу с разбиением по возрастам
 sheet[f'A{max_row+2}'] = 'Общее распределение обучающихся по возрасту'
+sheet[f'B{max_row+2}'] = 'Количество'
+
 age_distribution = counting_age_distribution(dpo_df,po_df)
-print(age_distribution)
 for row in age_distribution.values.tolist():
     sheet.append(row)
+# Добавляем круговую диаграмму
+# pie_age = PieChart()
+# # Для того чтобы не зависело от количества строк в предыдущих таблицах
+# labels = Reference(sheet,min_col=1,min_row=max_row+3,max_row=max_row+2 +len(age_distribution))
+# data = Reference(sheet,min_col=2,min_row=max_row+2,max_row=max_row+2 +len(age_distribution))
+#
+# pie_age.add_data(data,titles_from_data=True)
+# pie_age.set_categories(labels)
+# pie_age.title = 'Распределение обучившихся по возрастным категориям'
+#
+# sheet.add_chart(pie_age,f'F{max_row+2}')
+
+pie_age = PieChart()
+# Для того чтобы не зависело от количества строк в предыдущих таблицах
+labels = Reference(sheet,min_col=1,min_row=max_row+3,max_row=max_row+2 +len(age_distribution))
+data = Reference(sheet,min_col=2,min_row=max_row+3,max_row=max_row+2 +len(age_distribution))
+#Для отображения данных на диаграмме
+series = Series(data,title='Series 1')
+pie_age.append(series)
+
+s1 = pie_age.series[0]
+s1.dLbls = DataLabelList()
+s1.dLbls.showVal = True
+
+pie_age.add_data(data,titles_from_data=True)
+pie_age.set_categories(labels)
+pie_age.title = 'Распределение обучившихся по возрастным категориям'
+
+sheet.add_chart(pie_age,f'F{max_row+2}')
 
 min_column = wb.active.min_column
 max_column = wb.active.max_column

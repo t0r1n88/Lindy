@@ -8,7 +8,8 @@ from tkinter import messagebox
 from tkinter import ttk
 import openpyxl
 import time
-from openpyxl.chart import PieChart,Reference
+from openpyxl.chart.label import DataLabelList
+from openpyxl.chart import BarChart, Reference,PieChart,PieChart3D,Series
 
 
 
@@ -304,9 +305,19 @@ def create_report_svod():
         # Добавляем круговую диаграмму
         pie_main = PieChart()
         labels = Reference(sheet,min_col=1,min_row=2,max_row=3)
-        data = Reference(sheet,min_col=2,min_row=1,max_row=3)
+        data = Reference(sheet,min_col=2,min_row=2,max_row=3)
+
+        # Для отображения данных на диаграмме
+        series = Series(data, title='Series 1')
+        pie_main.append(series)
+
+        s1 = pie_main.series[0]
+        s1.dLbls = DataLabelList()
+        s1.dLbls.showVal = True
+
         pie_main.add_data(data,titles_from_data=True)
         pie_main.set_categories(labels)
+        pie_main.title = 'Распределение обучившихся'
         sheet.add_chart(pie_main,'F2')
         # # Добавляем таблицу с по направлениям
 
@@ -330,6 +341,36 @@ def create_report_svod():
             sheet.append(row)
 
         # Получаем последние активные ячейки чтобы записывалось по порядку и не налазило друг на друга
+        min_column = wb.active.min_column
+        max_column = wb.active.max_column
+        min_row = wb.active.min_row
+        max_row = wb.active.max_row
+
+        # Добавляем таблицу с разбиением по возрастам
+        sheet[f'A{max_row + 2}'] = 'Общее распределение обучающихся по возрасту'
+        age_distribution = counting_age_distribution(dpo_df, po_df)
+        for row in age_distribution.values.tolist():
+            sheet.append(row)
+
+        #Добавляем круговую диаграмму
+        pie_age = PieChart()
+        # Для того чтобы не зависело от количества строк в предыдущих таблицах
+        labels = Reference(sheet, min_col=1, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution))
+        data = Reference(sheet, min_col=2, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution))
+        # Для отображения данных на диаграмме
+        series = Series(data, title='Series 1')
+        pie_age.append(series)
+
+        s1 = pie_age.series[0]
+        s1.dLbls = DataLabelList()
+        s1.dLbls.showVal = True
+
+        pie_age.add_data(data, titles_from_data=True)
+        pie_age.set_categories(labels)
+        pie_age.title = 'Распределение обучившихся по возрастным категориям'
+
+        sheet.add_chart(pie_age, f'F{max_row + 2}')
+
         min_column = wb.active.min_column
         max_column = wb.active.max_column
         min_row = wb.active.min_row
@@ -467,6 +508,33 @@ def counting_total_sex(dpo,po):
     sum_general_total_sex = general_total_sex.groupby(['Пол']).sum().reset_index()
     return sum_general_total_sex
 
+def counting_age_distribution(dpo,po):
+    """
+    Функция для подсчета количества обучающихся по возрастным категориям
+    :param dpo: датафрейм ДПО
+    :param po: датафрейм ПО
+    :return: датафрейм сводной таблицы
+    """
+    #Создаем сводные таблицы
+    dpo_age_distribution = pd.pivot_table(dpo,index=['Возрастная_категория'],
+                                          values=['ФИО_именительный'],
+                                          aggfunc='count')
+    po_age_distribution = pd.pivot_table(po,index=['Возрастная_категория'],
+                                          values=['ФИО_именительный'],
+                                          aggfunc='count')
+    # Извлекам индексы
+    dpo_age_distribution = dpo_age_distribution.reset_index()
+    po_age_distribution = po_age_distribution.reset_index()
+    # Меняем колонки
+    dpo_age_distribution.columns = ['Возрастная_категория','Количество']
+    po_age_distribution.columns = ['Возрастная_категория','Количество']
+
+    #Создаем единую сводную таблицу
+    general_age_distribution = pd.concat([dpo_age_distribution,po_age_distribution],ignore_index=True)
+    #Повторно группируем чтобы соединить категории из обеих таблиц
+    general_age_distribution = general_age_distribution.groupby(['Возрастная_категория']).sum().reset_index()
+
+    return general_age_distribution
 
 if __name__ == '__main__':
     window = Tk()
