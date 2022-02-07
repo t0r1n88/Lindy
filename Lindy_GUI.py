@@ -8,8 +8,11 @@ from tkinter import messagebox
 from tkinter import ttk
 import openpyxl
 import time
+from datetime import date
 from openpyxl.chart.label import DataLabelList
 from openpyxl.chart import BarChart, Reference,PieChart,PieChart3D,Series
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
 
 
@@ -91,6 +94,19 @@ def select_files_data_other():
     global names_files_data_other
     names_files_data_other = filedialog.askopenfilenames(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
 
+def calculate_age(born):
+    """
+    Функция для расчета текущего возраста взято с https://stackoverflow.com/questions/2217488/age-from-birthdate-in-python/9754466#9754466
+    :param born: дата рождения
+    :return: возраст
+    """
+
+    try:
+        today = date.today()
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    except:
+        messagebox.showerror('ЦОПП Бурятия','Отсутствует или некорректная дата рождения слушателя\nПроверьте файл!')
+        exit()
 
 
 def generate_docs_dpo():
@@ -122,14 +138,23 @@ def generate_docs_dpo():
 
         # Создаем список в котором будет храниьт ФИО
         lst_students = []
+        # Создаем словарь для всех колонок
+        # main_dict = dict.fromkeys(data[0].keys(),[])
+        # print(main_dict)
+
 
         # Итеруемся по списку словарей, чтобы получить список ФИО
+
         for row in data:
             lst_students.append(row['ФИО_именительный'])
+
+
+
         # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
         context = data[0]
         # Создаем в context  пару ключ:значение lst_studenst:список студентов
         context['lst_students'] = lst_students
+        # context['список_обучающихся'] = lst_students
         # Загружаем шаблон
         doc = DocxTemplate(name_file_template_doc)
         # Создаем документ
@@ -411,8 +436,19 @@ def create_general_table():
             # Создаем промежуточный датафрейм с данными с листа ДПО
             temp_po = pd.read_excel(file, sheet_name='ПО')
             # Добавляем промежуточные датафреймы в исходные
-            df_dpo = df_dpo.append(temp_dpo, ignore_index=True)
-            df_po = df_po.append(temp_po, ignore_index=True)
+            #
+            df_dpo = pd.concat([df_dpo,temp_dpo],ignore_index=True)
+            df_po = pd.concat([df_po,temp_po],ignore_index=True)
+            # df_po = df_po.append(temp_po, ignore_index=True)
+        df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
+        df_dpo['Возрастная_категория'] = pd.cut(df_dpo['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
+                                                labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
+                                                        '28-50 лет', '51-65 лет', '66 и больше'])
+        #
+        df_po['Текущий_возраст'] = df_po['Дата_рождения_получателя'].apply(calculate_age)
+        df_po['Возрастная_категория'] = pd.cut(df_po['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
+                                               labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
+                                                       '28-50 лет', '51-65 лет', '66 и больше'])
 
         # Код сохранения датафрейма в разные листы и сохранением форматирования  взят отсюда https://azzrael.ru/python-pandas-openpyxl-excel
         wb = openpyxl.load_workbook(name_file_template_table)
