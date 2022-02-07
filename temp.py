@@ -10,8 +10,10 @@ import openpyxl
 import time
 from datetime import date
 from openpyxl.chart.label import DataLabelList
-from openpyxl.chart import BarChart, Reference,PieChart,PieChart3D,Series
+from openpyxl.chart import BarChart, Reference, PieChart, PieChart3D, Series
+import warnings
 
+warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
 
 def resource_path(relative_path):
@@ -34,6 +36,7 @@ def select_file_template_doc():
     name_file_template_doc = filedialog.askopenfilename(
         filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
 
+
 def select_file_template_table():
     """
     Функция для выбора шаблона для создания общей таблицы
@@ -42,7 +45,6 @@ def select_file_template_table():
     global name_file_template_table
     # Получаем путь к файлу
     name_file_template_table = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
-
 
 
 def select_file_data_doc():
@@ -92,14 +94,21 @@ def select_files_data_other():
     global names_files_data_other
     names_files_data_other = filedialog.askopenfilenames(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
 
+
 def calculate_age(born):
     """
     Функция для расчета текущего возраста взято с https://stackoverflow.com/questions/2217488/age-from-birthdate-in-python/9754466#9754466
     :param born: дата рождения
     :return: возраст
     """
-    today = date.today()
-    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+    try:
+        today = date.today()
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    except:
+        messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата рождения слушателя\nПроверьте файл!')
+        exit()
+
 
 def generate_docs_dpo():
     """
@@ -131,16 +140,20 @@ def generate_docs_dpo():
         # Создаем список в котором будет храниьт ФИО
         lst_students = []
         # Создаем словарь для всех колонок
-        # main_dict = dict.fromkeys(data[0].keys(),[])
-        # print(main_dict)
 
+        main_dict = {key: [] for key in data[0].keys()}
+
+        for row in data:
+            for key, value in row.items():
+                main_dict[key].append(value)
+        print(main_dict)
+
+        # Добавляем префикс для ключей списков, чтобы различать их в словаре context с обычными ключами
 
         # Итеруемся по списку словарей, чтобы получить список ФИО
 
         for row in data:
             lst_students.append(row['ФИО_именительный'])
-
-
 
         # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
         context = data[0]
@@ -152,7 +165,8 @@ def generate_docs_dpo():
         # Создаем документ
         doc.render(context)
         # сохраняем документ
-        doc.save(f'{path_to_end_folder_doc}/Приказ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
+        doc.save(
+            f'{path_to_end_folder_doc}/Приказ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
         messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
 
@@ -182,9 +196,10 @@ def generate_docs_po():
 
                     doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
             except KeyError:
-                messagebox.showerror('ЦОПП Бурятия','Колонка с ФИО должна называться ФИО_именительный')
+                messagebox.showerror('ЦОПП Бурятия', 'Колонка с ФИО должна называться ФИО_именительный')
             except:
-                messagebox.showerror('ЦОПП Бурятия','Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
+                messagebox.showerror('ЦОПП Бурятия',
+                                     'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
                 exit()
 
             else:
@@ -209,13 +224,14 @@ def generate_docs_po():
                 # Создаем документ
                 doc.render(context)
                 # сохраняем документ
-                doc.save(f'{path_to_end_folder_doc}/Приказ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
+                doc.save(
+                    f'{path_to_end_folder_doc}/Приказ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
                 exit()
 
             except OSError:
-                messagebox.showerror('ЦОПП Бурятия','Закройте открытый файл Word')
+                messagebox.showerror('ЦОПП Бурятия', 'Закройте открытый файл Word')
                 exit()
             except:
                 messagebox.showerror('ЦОПП Бурятия',
@@ -267,6 +283,7 @@ def generate_docs_other():
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
+
 # Функции для создания отчетов
 def create_report_one_pk():
     """
@@ -274,6 +291,7 @@ def create_report_one_pk():
     :return:
     """
     pass
+
 
 def create_report_svod():
     """
@@ -321,8 +339,8 @@ def create_report_svod():
 
         # Добавляем круговую диаграмму
         pie_main = PieChart()
-        labels = Reference(sheet,min_col=1,min_row=2,max_row=3)
-        data = Reference(sheet,min_col=2,min_row=2,max_row=3)
+        labels = Reference(sheet, min_col=1, min_row=2, max_row=3)
+        data = Reference(sheet, min_col=2, min_row=2, max_row=3)
 
         # Для отображения данных на диаграмме
         series = Series(data, title='Series 1')
@@ -332,16 +350,15 @@ def create_report_svod():
         s1.dLbls = DataLabelList()
         s1.dLbls.showVal = True
 
-        pie_main.add_data(data,titles_from_data=True)
+        pie_main.add_data(data, titles_from_data=True)
         pie_main.set_categories(labels)
         pie_main.title = 'Распределение обучившихся'
-        sheet.add_chart(pie_main,'F2')
+        sheet.add_chart(pie_main, 'F2')
         # # Добавляем таблицу с по направлениям
 
         sheet['A7'] = 'Вид обучения'
         sheet['B7'] = 'Название программы'
         sheet['C7'] = 'Количество обучающихся'
-
 
         for row in df_counting_type_and_name_trainning.values.tolist():
             sheet.append(row)
@@ -369,7 +386,7 @@ def create_report_svod():
         for row in age_distribution.values.tolist():
             sheet.append(row)
 
-        #Добавляем круговую диаграмму
+        # Добавляем круговую диаграмму
         pie_age = PieChart()
         # Для того чтобы не зависело от количества строк в предыдущих таблицах
         labels = Reference(sheet, min_col=1, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution))
@@ -402,13 +419,12 @@ def create_report_svod():
     except ValueError:
         messagebox.showerror('ЦОПП Бурятия', 'Проверьте названия листов! Должно быть ДПО и ПО')
     except KeyError:
-        messagebox.showerror('ЦОПП Бурятия','Названия колонок не совпадают')
+        messagebox.showerror('ЦОПП Бурятия', 'Названия колонок не совпадают')
     except:
         messagebox.showerror('ЦОПП Бурятия',
                              'Возникла ошибка')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Сводный отчет успешно создан!')
-
 
 
 def create_general_table():
@@ -418,8 +434,8 @@ def create_general_table():
     """
     try:
         # Получаем базовые датафреймы
-        df_dpo = pd.read_excel(name_file_template_table,sheet_name='ДПО')
-        df_po = pd.read_excel(name_file_template_table,sheet_name='ПО')
+        df_dpo = pd.read_excel(name_file_template_table, sheet_name='ДПО')
+        df_po = pd.read_excel(name_file_template_table, sheet_name='ПО')
 
         # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
         for file in names_files_data_other:
@@ -428,15 +444,14 @@ def create_general_table():
             # Создаем промежуточный датафрейм с данными с листа ДПО
             temp_po = pd.read_excel(file, sheet_name='ПО')
             # Добавляем промежуточные датафреймы в исходные
-            df_dpo = df_dpo.append(temp_dpo, ignore_index=True)
-            df_po = df_po.append(temp_po, ignore_index=True)
-        #    general_svod_category_and_name = pd.concat([dpo_svod_category_and_name, po_svod_category_and_name],index=True)
-        # Добавляем в датафреймы колонки с текущим возрастом и категорией
+            #
+            df_dpo = pd.concat([df_dpo, temp_dpo], ignore_index=True)
+            df_po = pd.concat([df_po, temp_po], ignore_index=True)
         df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
         df_dpo['Возрастная_категория'] = pd.cut(df_dpo['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
                                                 labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
                                                         '28-50 лет', '51-65 лет', '66 и больше'])
-
+        #
         df_po['Текущий_возраст'] = df_po['Дата_рождения_получателя'].apply(calculate_age)
         df_po['Возрастная_категория'] = pd.cut(df_po['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
                                                labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
@@ -456,12 +471,14 @@ def create_general_table():
 
         t = time.localtime()
         current_time = time.strftime('%d_%m_%y', t)
-        #Сохраняем итоговый файл
+        # Сохраняем итоговый файл
         wb.save(f'{path_to_end_folder_doc}/Общая таблица слушателей ЦОПП от {current_time}.xlsx')
     except:
-        messagebox.showerror('ЦОПП Бурятия','Возникла ошибка,проверьте шаблон таблицы\nДобавляемы файлы должны иметь одинаковую структуру с шаблоном таблицы')
+        messagebox.showerror('ЦОПП Бурятия',
+                             'Возникла ошибка,проверьте шаблон таблицы\nДобавляемы файлы должны иметь одинаковую структуру с шаблоном таблицы')
     else:
-        messagebox.showinfo('ЦОПП Бурятия','Общая таблица успешно создана!')
+        messagebox.showinfo('ЦОПП Бурятия', 'Общая таблица успешно создана!')
+
 
 # Функции для создания сводной таблицы
 def counting_total_student(dpo_df, po_df):
@@ -479,7 +496,8 @@ def counting_total_student(dpo_df, po_df):
 
     return total, total_dpo, total_po
 
-def counting_type_of_training(dpo,po):
+
+def counting_type_of_training(dpo, po):
     """
     Функция для создания сводной таблицы по категориям направление подготовки, название программы,количество обучающихся
     :param dpo: датафрейм ДПО
@@ -509,7 +527,8 @@ def counting_type_of_training(dpo,po):
                                                ignore_index=True)
     return general_svod_category_and_name
 
-def counting_total_sex(dpo,po):
+
+def counting_total_sex(dpo, po):
     """
     Функция для подсчета количества мужчин и женщин
     :param dpo: датафрейм ДПО
@@ -517,52 +536,54 @@ def counting_total_sex(dpo,po):
     :return: датафрейм сводной таблицы
     """
     # Создаем сводные таблицы
-    dpo_total_sex = pd.pivot_table(dpo,index=['Пол_получателя'],
+    dpo_total_sex = pd.pivot_table(dpo, index=['Пол_получателя'],
                                    values=['ФИО_именительный'],
                                    aggfunc='count')
-    po_total_sex = pd.pivot_table(po,index=['Пол_получателя'],
+    po_total_sex = pd.pivot_table(po, index=['Пол_получателя'],
                                   values=['ФИО_именительный'],
                                   aggfunc='count')
     # Извлекаем индексы
     dpo_total_sex = dpo_total_sex.reset_index()
     po_total_sex = po_total_sex.reset_index()
-    #Переименовываем колонки
-    dpo_total_sex.columns = ['Пол','Количество']
-    po_total_sex.columns = ['Пол','Количество']
+    # Переименовываем колонки
+    dpo_total_sex.columns = ['Пол', 'Количество']
+    po_total_sex.columns = ['Пол', 'Количество']
 
     # Соединяем в единую таблицу
-    general_total_sex = pd.concat([dpo_total_sex,po_total_sex],ignore_index=True)
-    #Группируем по полю Пол чтобы суммировать значения
+    general_total_sex = pd.concat([dpo_total_sex, po_total_sex], ignore_index=True)
+    # Группируем по полю Пол чтобы суммировать значения
     sum_general_total_sex = general_total_sex.groupby(['Пол']).sum().reset_index()
     return sum_general_total_sex
 
-def counting_age_distribution(dpo,po):
+
+def counting_age_distribution(dpo, po):
     """
     Функция для подсчета количества обучающихся по возрастным категориям
     :param dpo: датафрейм ДПО
     :param po: датафрейм ПО
     :return: датафрейм сводной таблицы
     """
-    #Создаем сводные таблицы
-    dpo_age_distribution = pd.pivot_table(dpo,index=['Возрастная_категория'],
+    # Создаем сводные таблицы
+    dpo_age_distribution = pd.pivot_table(dpo, index=['Возрастная_категория'],
                                           values=['ФИО_именительный'],
                                           aggfunc='count')
-    po_age_distribution = pd.pivot_table(po,index=['Возрастная_категория'],
-                                          values=['ФИО_именительный'],
-                                          aggfunc='count')
+    po_age_distribution = pd.pivot_table(po, index=['Возрастная_категория'],
+                                         values=['ФИО_именительный'],
+                                         aggfunc='count')
     # Извлекам индексы
     dpo_age_distribution = dpo_age_distribution.reset_index()
     po_age_distribution = po_age_distribution.reset_index()
     # Меняем колонки
-    dpo_age_distribution.columns = ['Возрастная_категория','Количество']
-    po_age_distribution.columns = ['Возрастная_категория','Количество']
+    dpo_age_distribution.columns = ['Возрастная_категория', 'Количество']
+    po_age_distribution.columns = ['Возрастная_категория', 'Количество']
 
-    #Создаем единую сводную таблицу
-    general_age_distribution = pd.concat([dpo_age_distribution,po_age_distribution],ignore_index=True)
-    #Повторно группируем чтобы соединить категории из обеих таблиц
+    # Создаем единую сводную таблицу
+    general_age_distribution = pd.concat([dpo_age_distribution, po_age_distribution], ignore_index=True)
+    # Повторно группируем чтобы соединить категории из обеих таблиц
     general_age_distribution = general_age_distribution.groupby(['Возрастная_категория']).sum().reset_index()
 
     return general_age_distribution
+
 
 if __name__ == '__main__':
     window = Tk()
@@ -584,17 +605,13 @@ if __name__ == '__main__':
 
     # Создаем вкладку создания отчетов
     tab_create_report = ttk.Frame(tab_control)
-    tab_control.add(tab_create_report,text='Создание отчетов')
-    tab_control.pack(expand=1,fill='both')
+    tab_control.add(tab_create_report, text='Создание отчетов')
+    tab_control.pack(expand=1, fill='both')
 
     # Создаем вкладку для Прочих операций
     tab_create_other = ttk.Frame(tab_control)
-    tab_control.add(tab_create_other,text='Прочие операции')
-    tab_control.pack(expand=1,fill='both')
-
-
-
-
+    tab_control.add(tab_create_other, text='Прочие операции')
+    tab_control.pack(expand=1, fill='both')
 
     # Добавляем виджеты на вкладку Создание документов
     # Создаем метку для описания назначения программы
@@ -662,7 +679,7 @@ if __name__ == '__main__':
                                     )
     btn_create_files_other.grid(column=0, row=8, padx=10, pady=10)
 
-# Добавляем виджеты на вкладку создания отчетов
+    # Добавляем виджеты на вкладку создания отчетов
     lbl_hello = Label(tab_create_report,
                       text='Центр опережающей профессиональной подготовки Республики Бурятия\nСоздание отчетов')
     lbl_hello.grid(column=0, row=0, padx=10, pady=25)
@@ -680,35 +697,35 @@ if __name__ == '__main__':
 
     # Создаем кнопку Выбрать файл с данными
     btn_data_report = Button(frame_data_for_report, text='1) Выберите файл с данными', font=('Arial Bold', 20),
-                               command=select_file_data_report
-                               )
+                             command=select_file_data_report
+                             )
     btn_data_report.grid(column=0, row=3, padx=10, pady=10)
 
     # Создаем кнопку для выбора папки куда будут генерироваться файлы
 
-    btn_choose_end_folder_report = Button(frame_data_for_report, text='2) Выберите конечную папку', font=('Arial Bold', 20),
-                                            command=select_end_folder_report
-                                            )
+    btn_choose_end_folder_report = Button(frame_data_for_report, text='2) Выберите конечную папку',
+                                          font=('Arial Bold', 20),
+                                          command=select_end_folder_report
+                                          )
     btn_choose_end_folder_report.grid(column=0, row=5, padx=10, pady=10)
 
     # Создаем облать для размещения кнопок создания отчетов
     frame_create_report = LabelFrame(tab_create_report, text='Создание отчетов')
-    frame_create_report.grid(column=0,row=6,padx=10)
+    frame_create_report.grid(column=0, row=6, padx=10)
 
     # Создание сводного отчета по показателям ЦОПП
 
     btn_report_svod = Button(frame_create_report, text='Создать сводный отчет', font=('Arial Bold', 20),
-                               command=create_report_svod
-                               )
-    btn_report_svod.grid(column=0,row=7,padx=10,pady=10)
+                             command=create_report_svod
+                             )
+    btn_report_svod.grid(column=0, row=7, padx=10, pady=10)
 
     btn_report_one_pk = Button(frame_create_report, text='Создать отчет 1-ПК', font=('Arial Bold', 20),
                                command=create_report_one_pk
                                )
-    btn_report_one_pk.grid(column=0,row=8,padx=10,pady=10)
+    btn_report_one_pk.grid(column=0, row=8, padx=10, pady=10)
 
-
-    #размещаем виджеты на вкладке Прочее
+    # размещаем виджеты на вкладке Прочее
     lbl_hello = Label(tab_create_other,
                       text='Центр опережающей профессиональной подготовки Республики Бурятия\nПрочие операции')
     lbl_hello.grid(column=0, row=0, padx=10, pady=25)
@@ -726,14 +743,14 @@ if __name__ == '__main__':
 
     # Создаем кнопку для выбора шаблона таблицы
     btn_table_other_template = Button(frame_data_for_other, text='Выберите шаблон таблицы', font=('Arial Bold', 20),
-                              command=select_file_template_table
-                              )
+                                      command=select_file_template_table
+                                      )
     btn_table_other_template.grid(column=0, row=3, padx=10, pady=10)
 
     # Создаем кнопку Выбрать файлы с данными
     btn_data_other = Button(frame_data_for_other, text='Выберите файлы с данными', font=('Arial Bold', 20),
-                              command=select_files_data_other
-                              )
+                            command=select_files_data_other
+                            )
     btn_data_other.grid(column=0, row=4, padx=10, pady=10)
     #
     btn_choose_end_folder_doc = Button(frame_data_for_other, text='Выберите конечную папку', font=('Arial Bold', 20),
@@ -744,13 +761,8 @@ if __name__ == '__main__':
     # Кнопка создать общую таблицу
 
     btn_create_general_table = Button(tab_create_other, text='Создать общую таблицу', font=('Arial Bold', 20),
-                               command=create_general_table
-                               )
-    btn_create_general_table.grid(column=0,row=6,padx=10,pady=10)
-
-
-
-
-
+                                      command=create_general_table
+                                      )
+    btn_create_general_table.grid(column=0, row=6, padx=10, pady=10)
 
     window.mainloop()

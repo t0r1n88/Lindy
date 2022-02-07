@@ -139,21 +139,24 @@ def generate_docs_dpo():
         # Создаем список в котором будет храниьт ФИО
         lst_students = []
         # Создаем словарь для всех колонок
-        # main_dict = dict.fromkeys(data[0].keys(),[])
-        # print(main_dict)
 
-
-        # Итеруемся по списку словарей, чтобы получить список ФИО
+        main_dict = {key:[] for key in data[0].keys()}
 
         for row in data:
-            lst_students.append(row['ФИО_именительный'])
+            for key,value in row.items():
+                main_dict[key].append(value)
+
+        #Добавляем префикс для ключей списков, чтобы различать их в словаре context с обычными ключами
+
+        lst_main_dict = {f'Список_{key}':value  for key,value in main_dict.items()}
+
 
 
 
         # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
         context = data[0]
-        # Создаем в context  пару ключ:значение lst_studenst:список студентов
-        context['lst_students'] = lst_students
+        # Добавляем в словарь context словарь со списками значений, формата Список_Название колонки:[значения]
+        context.update(lst_main_dict)
         # context['список_обучающихся'] = lst_students
         # Загружаем шаблон
         doc = DocxTemplate(name_file_template_doc)
@@ -439,7 +442,6 @@ def create_general_table():
             #
             df_dpo = pd.concat([df_dpo,temp_dpo],ignore_index=True)
             df_po = pd.concat([df_po,temp_po],ignore_index=True)
-            # df_po = df_po.append(temp_po, ignore_index=True)
         df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
         df_dpo['Возрастная_категория'] = pd.cut(df_dpo['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
                                                 labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
