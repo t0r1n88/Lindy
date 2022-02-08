@@ -107,7 +107,7 @@ def calculate_age(born):
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
     except:
         messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата рождения слушателя\nПроверьте файл!')
-        exit()
+        quit()
 
 
 def convert_date(cell):
@@ -116,6 +116,47 @@ def convert_date(cell):
     """
     string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
     return string_date
+
+def create_initials(fio):
+    """
+    Функция для создания инициалов для использования в договорах
+    формат фио -Будаев Олег Тимурович выходной формат О.Т. Будаев
+    """
+    #Создаем 3 переменные
+
+    initials_firstname = ''
+    initials_middlename = ''
+    initials_lastname = ''
+
+    # Сплитим по пробелу
+    lst_fio = fio.split()
+    # Если ФИО стандартное
+    if len(lst_fio) == 3:
+
+        lastname = lst_fio[0]
+        firstname = lst_fio[1]
+        middlename = lst_fio[2]
+        # Создаем инициалы
+        initials_firstname = firstname[0].upper()
+        initials_middlename = middlename[0].upper()
+        initials_lastname = lastname
+        # Возвращаем полученную строку
+        return f'{initials_firstname}.{initials_middlename}. {initials_lastname}'
+    elif len(lst_fio) == 2:
+        lastname = lst_fio[0]
+        firstname = lst_fio[1]
+
+
+        initials_firstname = firstname[0].upper()
+        initials_lastname = lastname
+        return f'{initials_firstname}. {initials_lastname}'
+    elif len(lst_fio) == 1:
+        lastname = lst_fio[0]
+        initials_lastname = lastname
+        return f'{initials_lastname}'
+    else:
+        messagebox.showerror('ЦОПП Бурятия','Проверьте правильность написания ФИО в столбце ФИО_именительный')
+        quit()
 
 
 def generate_docs_dpo():
@@ -128,6 +169,9 @@ def generate_docs_dpo():
     # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
     df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
     df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
+    # Добавляем столбец инициалы
+    df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
+
 
     # Конвертируем датафрейм в список словарей
     data = df.to_dict('records')
@@ -188,6 +232,8 @@ def generate_docs_po():
         # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
         df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
         df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
+        # Добавляем столбец инициалы
+        df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
 
         # Конвертируем датафрейм в список словарей
         data = df.to_dict('records')
@@ -207,10 +253,11 @@ def generate_docs_po():
                     doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия', 'Колонка с ФИО должна называться ФИО_именительный')
+                quit()
             except:
                 messagebox.showerror('ЦОПП Бурятия',
                                      'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
-                exit()
+                quit()
 
             else:
                 messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
@@ -238,15 +285,15 @@ def generate_docs_po():
                     f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
-                exit()
+                quit()
 
             except OSError:
                 messagebox.showerror('ЦОПП Бурятия', 'Закройте открытый файл Word')
-                exit()
+                quit()
             except:
                 messagebox.showerror('ЦОПП Бурятия',
                                      'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
-                exit()
+                quit()
             else:
                 messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
@@ -450,7 +497,6 @@ def create_general_table():
         df_po = pd.read_excel(name_file_template_table, sheet_name='ПО')
 
         # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
-        print(path_to_files_groups)
         for dirpath, dirnames, filenames in os.walk(path_to_files_groups):
             for filename in filenames:
                 if re.search(pattern, filename):
