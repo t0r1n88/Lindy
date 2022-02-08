@@ -85,14 +85,14 @@ def select_end_folder_report():
     path_to_end_folder_report = filedialog.askdirectory()
 
 
-def select_files_data_other():
+def select_files_data_groups():
     """
     Функция для выбора файлов с данными при выполнении прочих операций
     :return:
     """
     # Создаем глобальную переменную, дада я знаю что надо все сделать в виде классов.Потом когда нибудь
-    global names_files_data_other
-    names_files_data_other = filedialog.askopenfilenames(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+    global path_to_files_groups
+    path_to_files_groups = filedialog.askdirectory()
 
 def calculate_age(born):
     """
@@ -427,21 +427,27 @@ def create_general_table():
     Функция для создания общей таблицы с данными всех групп из множества отдельных таблицы на каждую группу
     :return:
     """
+    pattern = re.compile(
+        '^[А-ЯЁ]+_.+_(?:январь|февраль|март|апрель|май|июнь|июль|август|сентябрь|октябрь|ноябрь|декабрь)\.xlsx$')
     try:
         # Получаем базовые датафреймы
         df_dpo = pd.read_excel(name_file_template_table,sheet_name='ДПО')
         df_po = pd.read_excel(name_file_template_table,sheet_name='ПО')
 
         # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
-        for file in names_files_data_other:
-            # Создаем промежуточный датафрейм с данными с листа ДПО
-            temp_dpo = pd.read_excel(file, sheet_name='ДПО')
-            # Создаем промежуточный датафрейм с данными с листа ДПО
-            temp_po = pd.read_excel(file, sheet_name='ПО')
-            # Добавляем промежуточные датафреймы в исходные
-            #
-            df_dpo = pd.concat([df_dpo,temp_dpo],ignore_index=True)
-            df_po = pd.concat([df_po,temp_po],ignore_index=True)
+        print(path_to_files_groups)
+        for dirpath,dirnames,filenames in os.walk(path_to_files_groups):
+            for filename in filenames:
+                if re.search(pattern, filename):
+                    print("Файл:", os.path.join(dirpath, filename))
+                    # Создаем промежуточный датафрейм с данными с листа ДПО
+                    temp_dpo = pd.read_excel(os.path.join(dirpath, filename), sheet_name='ДПО')
+                    # Создаем промежуточный датафрейм с данными с листа ДПО
+                    temp_po = pd.read_excel(os.path.join(dirpath, filename), sheet_name='ПО')
+                    # Добавляем промежуточные датафреймы в исходные
+                    #
+                    df_dpo = pd.concat([df_dpo,temp_dpo],ignore_index=True)
+                    df_po = pd.concat([df_po,temp_po],ignore_index=True)
         df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
         df_dpo['Возрастная_категория'] = pd.cut(df_dpo['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
                                                 labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
@@ -741,8 +747,8 @@ if __name__ == '__main__':
     btn_table_other_template.grid(column=0, row=3, padx=10, pady=10)
 
     # Создаем кнопку Выбрать файлы с данными
-    btn_data_other = Button(frame_data_for_other, text='Выберите файлы с данными', font=('Arial Bold', 20),
-                              command=select_files_data_other
+    btn_data_other = Button(frame_data_for_other, text='Выберите папку\n с данными всех курсов', font=('Arial Bold', 20),
+                              command=select_files_data_groups
                               )
     btn_data_other.grid(column=0, row=4, padx=10, pady=10)
     #
