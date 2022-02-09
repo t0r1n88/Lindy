@@ -556,6 +556,8 @@ def create_general_table():
         current_time = time.strftime('%d_%m_%y', t)
         # Сохраняем итоговый файл
         wb.save(f'{path_to_end_folder_doc}/Общая таблица слушателей ЦОПП от {current_time}.xlsx')
+    except NameError as e:
+        messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except:
         messagebox.showerror('ЦОПП Бурятия',
                              'Возникла ошибка,проверьте шаблон таблицы\nДобавляемы файлы должны иметь одинаковую структуру с шаблоном таблицы')
@@ -587,21 +589,28 @@ def counting_type_of_training(dpo, po):
     :param po: датафрейм ПО
     :return: датафрейм сводной таблицы
     """
-    # Создаем сводные таблицы
-    dpo_svod_category_and_name = pd.pivot_table(dpo, index=[
-        'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка',
-        'Наименование_дополнительной_профессиональной_программы'],
-                                                values=['ФИО_именительный'],
-                                                aggfunc='count')
-    po_svod_category_and_name = pd.pivot_table(po,
-                                               index=['Программа_профессионального_обучения_направление_подготовки',
-                                                      'Наименование_программы_профессионального_обучения'],
-                                               values=['ФИО_именительный'],
-                                               aggfunc='count')
+    # Создаем сводные таблицы проверяее перед этим не пустые ли таблицы
+    if dpo.shape[0] > 0:
+        dpo_svod_category_and_name = pd.pivot_table(dpo, index=[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка',
+            'Наименование_дополнительной_профессиональной_программы'],
+                                                    values=['ФИО_именительный'],
+                                                    aggfunc='count')
+        dpo_svod_category_and_name = dpo_svod_category_and_name.reset_index()
+    else:
+        dpo_svod_category_and_name = pd.DataFrame(columns=['Направление подготовки', 'Название программы', 'Количество обученных'])
 
-    # Добавляем цифровой индекс
-    dpo_svod_category_and_name = dpo_svod_category_and_name.reset_index()
-    po_svod_category_and_name = po_svod_category_and_name.reset_index()
+    if po.shape[0] > 0:
+        po_svod_category_and_name = pd.pivot_table(po,
+                                                   index=['Программа_профессионального_обучения_направление_подготовки',
+                                                          'Наименование_программы_профессионального_обучения'],
+                                                   values=['ФИО_именительный'],
+                                                   aggfunc='count')
+        po_svod_category_and_name = po_svod_category_and_name.reset_index()
+
+    else:
+        po_svod_category_and_name = pd.DataFrame(
+            columns=['Направление подготовки', 'Название программы', 'Количество обученных'])
     # Изменяем названия колонок, чтобы без проблем соединить 2 датафрейма
     dpo_svod_category_and_name.columns = ['Направление подготовки', 'Название программы', 'Количество обученных']
     po_svod_category_and_name.columns = ['Направление подготовки', 'Название программы', 'Количество обученных']
@@ -618,16 +627,23 @@ def counting_total_sex(dpo, po):
     :param po: датафрейм ПО
     :return: датафрейм сводной таблицы
     """
-    # Создаем сводные таблицы
-    dpo_total_sex = pd.pivot_table(dpo, index=['Пол_получателя'],
-                                   values=['ФИО_именительный'],
-                                   aggfunc='count')
-    po_total_sex = pd.pivot_table(po, index=['Пол_получателя'],
+    # Создаем сводные таблицы Проверяем на пустой лист ДПО или ПО
+    if dpo.shape[0] > 0:
+
+        dpo_total_sex = pd.pivot_table(dpo, index=['Пол_получателя'],
+                                       values=['ФИО_именительный'],
+                                       aggfunc='count')
+        dpo_total_sex = dpo_total_sex.reset_index()
+    else:
+        dpo_total_sex = pd.DataFrame(columns=['Пол', 'Количество'])
+
+    if po.shape[0] > 0:
+        po_total_sex = pd.pivot_table(po, index=['Пол_получателя'],
                                   values=['ФИО_именительный'],
                                   aggfunc='count')
-    # Извлекаем индексы
-    dpo_total_sex = dpo_total_sex.reset_index()
-    po_total_sex = po_total_sex.reset_index()
+        po_total_sex = po_total_sex.reset_index()
+    else:
+        po_total_sex = pd.DataFrame(columns=['Пол', 'Количество'])
     # Переименовываем колонки
     dpo_total_sex.columns = ['Пол', 'Количество']
     po_total_sex.columns = ['Пол', 'Количество']
@@ -647,15 +663,20 @@ def counting_age_distribution(dpo, po):
     :return: датафрейм сводной таблицы
     """
     # Создаем сводные таблицы
-    dpo_age_distribution = pd.pivot_table(dpo, index=['Возрастная_категория'],
-                                          values=['ФИО_именительный'],
-                                          aggfunc='count')
-    po_age_distribution = pd.pivot_table(po, index=['Возрастная_категория'],
-                                         values=['ФИО_именительный'],
-                                         aggfunc='count')
-    # Извлекам индексы
-    dpo_age_distribution = dpo_age_distribution.reset_index()
-    po_age_distribution = po_age_distribution.reset_index()
+    if dpo.shape[0] > 0:
+        dpo_age_distribution = pd.pivot_table(dpo, index=['Возрастная_категория'],
+                                              values=['ФИО_именительный'],
+                                              aggfunc='count')
+        dpo_age_distribution = dpo_age_distribution.reset_index()
+    else:
+        dpo_age_distribution = pd.DataFrame(columns=['Возрастная_категория', 'Количество'])
+    if po.shape[0] > 0:
+        po_age_distribution = pd.pivot_table(po, index=['Возрастная_категория'],
+                                             values=['ФИО_именительный'],
+                                             aggfunc='count')
+        po_age_distribution = po_age_distribution.reset_index()
+    else:
+        po_age_distribution = pd.DataFrame(columns=['Возрастная_категория', 'Количество'])
     # Меняем колонки
     dpo_age_distribution.columns = ['Возрастная_категория', 'Количество']
     po_age_distribution.columns = ['Возрастная_категория', 'Количество']
