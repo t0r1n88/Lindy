@@ -318,28 +318,45 @@ def generate_docs_other():
         data = df.to_dict('records')
         # Создаем счетчик для названий файлов в случае если нет колонки ФИО
         count = 0
+        # Создаем переменную для типа создаваемого документа
+        status_rb_type_doc = group_rb_type_doc.get()
+        # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
+        if status_rb_type_doc == 0:
         # Создаем в цикле документы
-        for row in data:
+            for row in data:
+                doc = DocxTemplate(name_file_template_doc)
+                context = row
+                count += 1
+                # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+
+                try:
+                    if 'ФИО' in row:
+                        doc.render(context)
+
+                        doc.save(f'{path_to_end_folder_doc}/{row["ФИО"]}.docx')
+                    else:
+                        doc.render(context)
+
+                        doc.save(f'{path_to_end_folder_doc}/{count}.docx')
+
+
+                except:
+                    messagebox.showerror('ЦОПП Бурятия',
+                                         'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
+                    exit()
+        else:
+            context = data[0]
+            # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
+            context['lst_items'] = data
             doc = DocxTemplate(name_file_template_doc)
-            context = row
-            count += 1
-            # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
-
-            try:
-                if 'ФИО' in row:
-                    doc.render(context)
-
-                    doc.save(f'{path_to_end_folder_doc}/{row["ФИО"]}.docx')
-                else:
-                    doc.render(context)
-
-                    doc.save(f'{path_to_end_folder_doc}/{count}.docx')
-
-
-            except:
-                messagebox.showerror('ЦОПП Бурятия',
-                                     'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
-                exit()
+            # Создаем документ
+            doc.render(context)
+            # сохраняем документ
+            # генерируем название
+            t = time.localtime()
+            current_time = time.strftime('%H_%M_%S', t)
+            doc.save(
+                f'{path_to_end_folder_doc}/Документ {current_time}.docx')
         messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
