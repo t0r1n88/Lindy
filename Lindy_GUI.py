@@ -114,8 +114,14 @@ def convert_date(cell):
     """
     Функция для конвертации даты в формате 1957-05-10 в формат 10.05.1957(строковый)
     """
-    string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
-    return string_date
+
+    try:
+        string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
+        return string_date
+    except TypeError:
+        messagebox.showerror('ЦОПП Бурятия','Проверьте правильность заполнения ячеек с датой!!!')
+        quit()
+
 
 def create_initials(fio):
     """
@@ -192,26 +198,27 @@ def generate_docs_dpo():
 
     else:
 
-        # Создаем список в котором будет храниьт ФИО
-        lst_students = []
-        # Создаем словарь для всех колонок
+        # Создаем словарь для всех колонок Решение с списком словарей намного удачнее
 
-        main_dict = {key: [] for key in data[0].keys()}
+        # main_dict = {key: [] for key in data[0].keys()}
+        #
+        # for row in data:
+        #     for key, value in row.items():
+        #         main_dict[key].append(value)
+        #
+        # # Добавляем префикс для ключей списков, чтобы различать их в словаре context с обычными ключами
+        #
+        # lst_main_dict = {f'Список_{key}': value for key, value in main_dict.items()}
 
-        for row in data:
-            for key, value in row.items():
-                main_dict[key].append(value)
-
-        # Добавляем префикс для ключей списков, чтобы различать их в словаре context с обычными ключами
-
-        lst_main_dict = {f'Список_{key}': value for key, value in main_dict.items()}
 
         # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
         context = data[0]
-        # Добавляем в словарь context словарь со списками значений, формата Список_Название колонки:[значения]
-        context.update(lst_main_dict)
-        # context['список_обучающихся'] = lst_students
+        # # Добавляем в словарь context словарь со списками значений, формата Список_Название колонки:[значения]
+        # context.update(lst_main_dict)
+        # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
+        context['lst_items'] = data
         # Загружаем шаблон
+
         doc = DocxTemplate(name_file_template_doc)
         # Создаем документ
         doc.render(context)
@@ -227,7 +234,7 @@ def generate_docs_po():
     :return:
     """
     try:
-        # Считываем данные с листа ДПО в указанной таблице
+        # Считываем данные с листа ПО в указанной таблице
         df = pd.read_excel(name_file_data_doc, sheet_name='ПО')
         # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
         df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
@@ -250,6 +257,7 @@ def generate_docs_po():
 
                     doc.render(context)
 
+
                     doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия', 'Колонка с ФИО должна называться ФИО_именительный')
@@ -264,25 +272,21 @@ def generate_docs_po():
 
         else:
 
-            # Создаем список в котором будет хранить ФИО
-            lst_students = []
 
             # Итеруемся по списку словарей, чтобы получить список ФИО
             try:
-                for row in data:
-                    lst_students.append(row['ФИО_именительный'])
                 # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
                 context = data[0]
-                # Создаем в context  пару ключ:значение lst_studenst:список студентов
-                context['lst_students'] = lst_students
+                # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
+                context['lst_items'] = data
+
                 # Загружаем шаблон
                 doc = DocxTemplate(name_file_template_doc)
-
                 # Создаем документ
                 doc.render(context)
                 # сохраняем документ
                 doc.save(
-                    f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
+                    f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_программы_профессионального_обучения"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
                 quit()
@@ -312,7 +316,7 @@ def generate_docs_other():
 
         # Конвертируем датафрейм в список словарей
         data = df.to_dict('records')
-
+        # Создаем счетчик для названий файлов в случае если нет колонки ФИО
         count = 0
         # Создаем в цикле документы
         for row in data:
