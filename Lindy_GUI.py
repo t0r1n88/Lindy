@@ -1,3 +1,5 @@
+import tkinter
+
 import pandas as pd
 import os
 from docxtpl import DocxTemplate
@@ -94,6 +96,34 @@ def select_files_data_groups():
     global path_to_files_groups
     path_to_files_groups = filedialog.askdirectory()
 
+def select_file_params_calculate_data():
+    """
+    Функция для выбора файла c ячейками которые нужно подсчитать
+    :return: Путь к файлу
+    """
+    global name_file_params_calculate_data
+    name_file_params_calculate_data = filedialog.askopenfilename(
+        filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
+
+def select_files_data_calculate_data():
+    """
+    Функция для выбора файлов с данными параметры из которых нужно подсчитать
+    :return: Путь к файлам с данными
+    """
+    global names_files_calculate_data
+    # Получаем путь к файлу
+    names_files_calculate_data = filedialog.askopenfilenames(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
+
+def select_end_folder_calculate_data():
+    """
+    Функция для выбора папки куда будут генерироваться файл  с результатом подсчета и файл с проверочной инфомрацией
+    :return:
+    """
+    global path_to_end_folder_calculate_data
+    path_to_end_folder_calculate_data = filedialog.askdirectory()
+
 
 def calculate_age(born):
     """
@@ -170,62 +200,54 @@ def generate_docs_dpo():
     Функция для создания ддокументов по ДПО
     :return:
     """
-    # Считываем данные с листа ДПО в указанной таблице
-    df = pd.read_excel(name_file_data_doc, sheet_name='ДПО')
-    # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
-    df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
-    df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
-    # Добавляем столбец инициалы
-    df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
+    try:
+        # Считываем данные с листа ДПО в указанной таблице
+        df = pd.read_excel(name_file_data_doc, sheet_name='ДПО')
+        # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
+        df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
+        df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
+        # Добавляем столбец инициалы
+        df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
+
+        # Конвертируем датафрейм в список словарей
+        data = df.to_dict('records')
+
+        # Создаем переменную для типа создаваемого документа
+        status_rb_type_doc = group_rb_type_doc.get()
+        # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
+        if status_rb_type_doc == 0:
+            for row in data:
+                doc = DocxTemplate(name_file_template_doc)
+                context = row
+                # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+
+                doc.render(context)
+
+                doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
+            messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+
+        else:
 
 
-    # Конвертируем датафрейм в список словарей
-    data = df.to_dict('records')
 
-    # Создаем переменную для типа создаваемого документа
-    status_rb_type_doc = group_rb_type_doc.get()
-    # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
-    if status_rb_type_doc == 0:
-        for row in data:
+            # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
+            context = data[0]
+            # # Добавляем в словарь context словарь со списками значений, формата Список_Название колонки:[значения]
+            # context.update(lst_main_dict)
+            # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
+            context['lst_items'] = data
+            # Загружаем шаблон
+
             doc = DocxTemplate(name_file_template_doc)
-            context = row
-            # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
-
+            # Создаем документ
             doc.render(context)
+            # сохраняем документ
+            doc.save(
+                f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
+            messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+    except NameError:
+        messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
-            doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
-        messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
-
-    else:
-
-        # Создаем словарь для всех колонок Решение с списком словарей намного удачнее
-
-        # main_dict = {key: [] for key in data[0].keys()}
-        #
-        # for row in data:
-        #     for key, value in row.items():
-        #         main_dict[key].append(value)
-        #
-        # # Добавляем префикс для ключей списков, чтобы различать их в словаре context с обычными ключами
-        #
-        # lst_main_dict = {f'Список_{key}': value for key, value in main_dict.items()}
-
-
-        # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
-        context = data[0]
-        # # Добавляем в словарь context словарь со списками значений, формата Список_Название колонки:[значения]
-        # context.update(lst_main_dict)
-        # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
-        context['lst_items'] = data
-        # Загружаем шаблон
-
-        doc = DocxTemplate(name_file_template_doc)
-        # Создаем документ
-        doc.render(context)
-        # сохраняем документ
-        doc.save(
-            f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
-        messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
 
 def generate_docs_po():
@@ -494,6 +516,8 @@ def create_report_svod():
         t = time.localtime()
         current_time = time.strftime('%H_%M_%S', t)
         wb.save(f'{path_to_end_folder_report}/Сводный отчет {current_time}.xlsx')
+    except NameError:
+        messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except ValueError:
         messagebox.showerror('ЦОПП Бурятия', 'Проверьте названия листов! Должно быть ДПО и ПО')
     except KeyError:
@@ -689,6 +713,182 @@ def counting_age_distribution(dpo, po):
     return general_age_distribution
 
 
+# Функции обработки данных для вкладки Обработка данных
+def calculate_data():
+    """
+    Функция для подсчета данных из файлов
+    :return:
+    """
+    count = 0
+    count_errors = 0
+    quantity_files = len(names_files_calculate_data)
+    current_time = time.strftime('%H_%M_%S')
+    # Состояние чекбокса
+    mode_text = mode_text_value.get()
+
+
+    # Получаем название обрабатываемого листа
+    name_list_df = pd.read_excel(name_file_params_calculate_data, nrows=2)
+    name_list = name_list_df['Значение'].loc[0]
+
+    # Получаем количество листов в файле, на случай если название листа не совпадает с правильным
+    quantity_list_in_file = name_list_df['Значение'].loc[1]
+
+    # Получаем шаблон с данными, первую строку пропускаем, поскольку название обрабатываемого листа мы уже получили
+    df = pd.read_excel(name_file_params_calculate_data, skiprows=2)
+
+    # Создаем словарь параметров
+    param_dict = dict()
+
+    for row in df.itertuples():
+        param_dict[row[1]] = row[2]
+    # Создаем словарь для подсчета данных, копируя ключи из словаря параметров, значения в зависимости от способа обработки
+
+    if mode_text == 'Yes':
+        result_dct = {key: '' for key, value in param_dict.items()}
+    else:
+        result_dct = {key: 0 for key, value in param_dict.items()}
+
+        # Создаем датафрейм для контроля процесса подсчета и заполняем словарь на основе которого будем делать итоговую таблицу
+
+    check_df = pd.DataFrame(columns=param_dict.keys())
+    # Вставляем колонку для названия файла
+    check_df.insert(0, 'Название файла', '')
+    for file in names_files_calculate_data:
+        # Проверяем чтобы файл не был резервной копией.
+        if '~$' in file:
+            continue
+        # Создаем словарь для создания строки которую мы будем добавлять в проверочный датафрейм
+        new_row = dict()
+        # Получаем  отбрасываем расширение файла
+        full_name_file = file.split('.')[0]
+        # Получаем имя файла  без пути
+        name_file = full_name_file.split('/')[-1]
+        try:
+
+            new_row['Название файла'] = name_file
+
+            wb = openpyxl.load_workbook(file)
+            # Проверяем наличие листа
+            if name_list in wb.sheetnames:
+                sheet = wb[name_list]
+            # проверяем количество листов в файле.Если значение равно 1 то просто берем первый лист, иначе вызываем ошибку
+            elif quantity_list_in_file == 1:
+                temp_name = wb.sheetnames[0]
+                sheet = wb[temp_name]
+            else:
+                raise Exception
+
+            for key, cell in param_dict.items():
+                result_dct[key] += check_data(sheet[cell].value, mode_text)
+                new_row[key] = sheet[cell].value
+
+            temp_df = pd.DataFrame(new_row,index=['temp_index'])
+            check_df = pd.concat([check_df, temp_df], ignore_index=True)
+
+            # check_df = check_df.append(new_row, ignore_index=True)
+
+            count += 1
+        # Ловим исключения
+        except NameError:
+            messagebox.showerror('ЦОПП Бурятия',
+                                 'Выберите файл с параметрами,обрабатываемые данные, конечную папку')
+        except Exception as err:
+            count_errors += 1
+            with open(f'{path_to_end_folder_calculate_data}/ERRORS {current_time}.txt', 'a', encoding='utf-8') as f:
+                f.write(f'Файл {name_file} не обработан!!!\n')
+
+    check_df.to_excel(f'{path_to_end_folder_calculate_data}/Проверка вычисления.xlsx', index=False)
+
+    # Создание итоговой таблицы результатов подсчета
+
+    finish_result = pd.DataFrame()
+
+    finish_result['Наименование показателя'] = result_dct.keys()
+    finish_result['Значение показателя'] = result_dct.values()
+    # Проводим обработку в зависимости от значения переключателя
+
+    if mode_text == 'Yes':
+        # Обрабатываем датафрейм считая текстовые данные
+        count_text_df = count_text_value(finish_result)
+        count_text_df.to_excel(f'{path_to_end_folder_calculate_data}/Подсчет текстовых значений.xlsx')
+    else:
+        finish_result.to_excel(f'{path_to_end_folder_calculate_data}/Итоговые значения.xlsx', index=False)
+
+    if count_errors != 0:
+        messagebox.showinfo('ЦОПП Бурятия',
+                            f'Обработка файлов завершена!\nОбработано файлов:  {count} из {quantity_files}\n Необработанные файлы указаны в файле {path_to_end_folder_calculate_data}/ERRORS {current_time}.txt ')
+    else:
+        messagebox.showinfo('ЦОПП Бурятия',
+                            f'Обработка файлов успешно завершена!\nОбработано файлов:  {count} из {quantity_files}')
+
+
+
+
+def count_text_value(df):
+    """
+    Функция для подсчета количества вариантов того или иного показателя
+    :param df: датафрейм с сырыми данными. Название показателя значение показателя(строка разделенная ;)
+    :return: обработанный датафрейм с мультиндексом, где (Название показателя это индекс верхнего уровня, вариант показателя это индекс второго уровня а значение это сколько раз встречался
+    этот вариант в обрабатываемых файлах)
+    """
+    data = dict()
+
+    #
+    for row in df.itertuples():
+        value = row[2]
+        if type(value) == float or type(value) == int:
+            continue
+        # Создаем список, разделяя строку по ;
+        lst_value = row[2].split(';')[:-1]
+        #     # Отрезаем последний элемент, поскольку это пустое значение
+        temp_df = pd.DataFrame({'Value': lst_value})
+        counts_series = temp_df['Value'].value_counts()
+        # Делаем индекс колонкой и превращаем в обычную таблицу
+        index_count_values = counts_series.reset_index()
+        # Итерируемся по таблице.Это делается чтобы заполнить словарь на основе которого будет создаваться итоговая таблица
+        for count_row in index_count_values.itertuples():
+            # print(count_row)
+            # Заполняем словарь
+            data[(row[1], count_row[1])] = count_row[2]
+    # Создаем на основе получившегося словаря таблицу
+    out_df = pd.Series(data).to_frame().reset_index()
+    out_df = out_df.set_index(['level_0', 'level_1'])
+    out_df.index.names = ['Название показателя', 'Вариант показателя']
+    out_df.rename(columns={0: 'Количество'}, inplace=True)
+    return out_df
+
+
+def check_data(cell, text_mode):
+    """
+    Функция для проверки значения ячейки. Для обработки пустых значений, строковых значений, дат
+    :param cell: значение ячейки
+    :return: 0 если значение ячейки не число
+            число если значение ячейки число(ха звучит глуповато)
+    думаю функция должна работать с дополнительным параметром, от которого будет зависеть подсчет значений навроде галочек или плюсов в анкетах или опросах.
+    """
+    # Проверяем режим работы. если текстовый, то просто складываем строки
+    if text_mode == 'Yes':
+        if cell is None:
+            return ''
+        else:
+            temp_str = str(cell)
+            return f'{temp_str};'
+    # Если режим работы стандартный. Убрал подсчет строк и символов в числовом режиме, чтобы не запутывать.
+    else:
+        if cell is None:
+            return 0
+        if type(cell) == int:
+            return cell
+        elif type(cell) == float:
+            return cell
+        else:
+            return 0
+
+
+
+
+
 if __name__ == '__main__':
     window = Tk()
     window.title('ЦОПП Бурятия')
@@ -707,15 +907,23 @@ if __name__ == '__main__':
     tab_control.add(tab_create_doc, text='Создание документов')
     tab_control.pack(expand=1, fill='both')
 
+    # Создаем вкладку для создания сводной таблицы
+    tab_create_general_table = ttk.Frame(tab_control)
+    tab_control.add(tab_create_general_table, text='Создание сводной таблицы')
+    tab_control.pack(expand=1, fill='both')
+
+
     # Создаем вкладку создания отчетов
     tab_create_report = ttk.Frame(tab_control)
     tab_control.add(tab_create_report, text='Создание отчетов')
     tab_control.pack(expand=1, fill='both')
 
-    # Создаем вкладку для Прочих операций
-    tab_create_other = ttk.Frame(tab_control)
-    tab_control.add(tab_create_other, text='Прочие операции')
+    # Создаем вкладку для обработки таблиц excel  с одинаковой структурой
+    tab_calculate_data = ttk.Frame(tab_control)
+    tab_control.add(tab_calculate_data, text='Обработка данных')
     tab_control.pack(expand=1, fill='both')
+
+
 
     # Добавляем виджеты на вкладку Создание документов
     # Создаем метку для описания назначения программы
@@ -830,19 +1038,19 @@ if __name__ == '__main__':
     btn_report_one_pk.grid(column=0, row=8, padx=10, pady=10)
 
     # размещаем виджеты на вкладке Прочее
-    lbl_hello = Label(tab_create_other,
-                      text='Центр опережающей профессиональной подготовки Республики Бурятия\nПрочие операции')
+    lbl_hello = Label(tab_create_general_table,
+                      text='Центр опережающей профессиональной подготовки Республики Бурятия\nСоздание сводной таблицы по всем курсам')
     lbl_hello.grid(column=0, row=0, padx=10, pady=25)
 
     # Картинка . Пришлось переименовывать переменную, иначе картинка не отображалась
     path_to_img_other = resource_path('logo.png')
     img_other = PhotoImage(file=path_to_img_report)
-    Label(tab_create_other,
+    Label(tab_create_general_table,
           image=img_other
           ).grid(column=1, row=0, padx=10, pady=25)
 
     # Создаем область для того чтобы поместить туда подготовительные кнопки(выбрать файл,выбрать папку и т.п.)
-    frame_data_for_other = LabelFrame(tab_create_other, text='Подготовка')
+    frame_data_for_other = LabelFrame(tab_create_general_table, text='Подготовка')
     frame_data_for_other.grid(column=0, row=2, padx=10)
 
     # Создаем кнопку для выбора шаблона таблицы
@@ -865,9 +1073,64 @@ if __name__ == '__main__':
 
     # Кнопка создать общую таблицу
 
-    btn_create_general_table = Button(tab_create_other, text='Создать общую таблицу', font=('Arial Bold', 20),
+    btn_create_general_table = Button(tab_create_general_table, text='Создать общую таблицу', font=('Arial Bold', 20),
                                       command=create_general_table
                                       )
     btn_create_general_table.grid(column=0, row=6, padx=10, pady=10)
+
+
+    # Добавляем виджеты на вклдаку Обработки данных
+    # Создаем метку для описания назначения программы
+    lbl_hello = Label(tab_calculate_data,
+                      text='Центр опережающей профессиональной подготовки Республики Бурятия\nПодсчет данных из файлов Excel\nс одинаковой структурой')
+    lbl_hello.grid(column=0, row=0, padx=10, pady=25)
+
+    # Картинка
+    path_to_img_calculate = resource_path('logo.png')
+    img_calculate = PhotoImage(file=path_to_img)
+    Label(tab_calculate_data,
+          image=img_calculate
+          ).grid(column=1, row=0, padx=10, pady=25)
+
+    # Создаем кнопку Выбрать файл с параметрами
+    btn_select_file_params = Button(tab_calculate_data, text='1) Выбрать файл с параметрами', font=('Arial Bold', 20),
+                                    command=select_file_params_calculate_data
+                                    )
+    btn_select_file_params.grid(column=0, row=2, padx=10, pady=10)
+
+    # Создаем кнопку Выбрать файл с данными
+    btn_select_files_data = Button(tab_calculate_data, text='2) Выбрать файлы с данными', font=('Arial Bold', 20),
+                                   command=select_files_data_calculate_data
+                                   )
+    btn_select_files_data.grid(column=0, row=3, padx=10, pady=10)
+
+    # Создаем кнопку для выбора папки куда будут генерироваться файлы
+
+    btn_choose_end_folder = Button(tab_calculate_data, text='3) Выбрать конечную папку', font=('Arial Bold', 20),
+                                   command=select_end_folder_calculate_data
+                                   )
+    btn_choose_end_folder.grid(column=0, row=4, padx=10, pady=10)
+
+    # Создаем переменную для хранения результа переключения чекбокса
+    mode_text_value = tkinter.StringVar()
+
+    # Устанавливаем значение по умолчанию для этой переменной. По умолчанию будет вестись подсчет числовых данных
+    mode_text_value.set('No')
+    # Создаем чекбокс для выбора режима подсчета
+
+    chbox_mode_calculate = tkinter.Checkbutton(tab_calculate_data,
+                                          text='Поставьте галочку, если вам нужно посчитать текстовые данные ',
+                                          variable=mode_text_value,
+                                          offvalue='No',
+                                          onvalue='Yes')
+    chbox_mode_calculate.grid(column=0, row=5, padx=10, pady=10)
+
+    # Создаем кнопку для запуска подсчета файлов
+
+    btn_calculate = Button(tab_calculate_data, text='4) Подсчитать', font=('Arial Bold', 20),
+                           command=calculate_data
+                           )
+    btn_calculate.grid(column=0, row=6, padx=10, pady=10)
+
 
     window.mainloop()
