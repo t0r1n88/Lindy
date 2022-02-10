@@ -402,13 +402,18 @@ def create_report_svod():
     try:
         dpo_df = pd.read_excel(name_file_data_report, sheet_name='ДПО')
         po_df = pd.read_excel(name_file_data_report, sheet_name='ПО')
+        """
+        Проверяем заполнена ли колонка Возрастная категория.Если заполнена, то значит таблица прошла через процедуру create_general_table
+        Но нужно обработать случай когда нужно сделать отчет по одной таблице
+        """
+
 
         # Заполняем пустые поля для удобства группировки
         dpo_df = dpo_df.fillna('Не заполнено!!!')
         po_df = po_df.fillna('Не заполнено!!!')
-        # Создаем переменную для хранения строки на которой заканчивается предыдущий показатель
-        border_row = 2
-        border_column = 2
+
+
+
 
         # Получение общего количества прошедших обучение,количества прошедших по ДПО,по ПО
         total_students, total_students_dpo, total_students_po = counting_total_student(dpo_df, po_df)
@@ -540,7 +545,6 @@ def create_general_table():
         # Получаем базовые датафреймы
         df_dpo = pd.read_excel(name_file_template_table, sheet_name='ДПО')
         df_po = pd.read_excel(name_file_template_table, sheet_name='ПО')
-
         # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
         for dirpath, dirnames, filenames in os.walk(path_to_files_groups):
             for filename in filenames:
@@ -554,6 +558,9 @@ def create_general_table():
                     #
                     df_dpo = pd.concat([df_dpo, temp_dpo], ignore_index=True)
                     df_po = pd.concat([df_po, temp_po], ignore_index=True)
+
+
+        # Добавляем 2 колонки с характеристиками возраста
         df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
         df_dpo['Возрастная_категория'] = pd.cut(df_dpo['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
                                                 labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
@@ -564,16 +571,29 @@ def create_general_table():
                                                labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
                                                        '28-50 лет', '51-65 лет', '66 и больше'])
 
+        df_po.to_excel('PO.xlsx')
         # Код сохранения датафрейма в разные листы и сохранением форматирования  взят отсюда https://azzrael.ru/python-pandas-openpyxl-excel
         wb = openpyxl.load_workbook(name_file_template_table)
+
+
         # Записываем лист ДПО
+
         for ir in range(0, len(df_dpo)):
             for ic in range(0, len(df_dpo.iloc[ir])):
                 wb['ДПО'].cell(2 + ir, 1 + ic).value = df_dpo.iloc[ir][ic]
+
+        wb['ДПО']['BN1'] = 'Текущий_возраст'
+        wb['ДПО']['BO1'] = 'Возрастная_категория'
+
         # Записываем лист ПО
+
         for ir in range(0, len(df_po)):
             for ic in range(0, len(df_po.iloc[ir])):
                 wb['ПО'].cell(2 + ir, 1 + ic).value = df_po.iloc[ir][ic]
+        wb['ПО']['BG1'] = 'Текущий_возраст'
+        wb['ПО']['BH1'] = 'Возрастная_категория'
+
+
         # Получаем текущее время для того чтобы использовать в названии
 
         t = time.localtime()
@@ -582,9 +602,9 @@ def create_general_table():
         wb.save(f'{path_to_end_folder_doc}/Общая таблица слушателей ЦОПП от {current_time}.xlsx')
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
-    except:
-        messagebox.showerror('ЦОПП Бурятия',
-                             'Возникла ошибка,проверьте шаблон таблицы\nДобавляемы файлы должны иметь одинаковую структуру с шаблоном таблицы')
+    # except:
+    #     messagebox.showerror('ЦОПП Бурятия',
+    #                          'Возникла ошибка,проверьте шаблон таблицы\nДобавляемы файлы должны иметь одинаковую структуру с шаблоном таблицы')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Общая таблица успешно создана!')
 
