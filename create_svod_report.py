@@ -1,10 +1,32 @@
+import tkinter
+
 import pandas as pd
+import os
+from docxtpl import DocxTemplate
+from tkinter import *
+from tkinter import filedialog
+from tkinter import messagebox
+from tkinter import ttk
 import openpyxl
 import time
-from openpyxl.styles import Font
+import datetime
+from datetime import date
 from openpyxl.chart.label import DataLabelList
-from openpyxl.chart import BarChart, Reference,PieChart,PieChart3D,Series
-from copy import deepcopy
+from openpyxl.chart import BarChart, Reference, PieChart, PieChart3D, Series
+import warnings
+def calculate_age(born):
+    """
+    Функция для расчета текущего возраста взято с https://stackoverflow.com/questions/2217488/age-from-birthdate-in-python/9754466#9754466
+    :param born: дата рождения
+    :return: возраст
+    """
+
+    try:
+        today = date.today()
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    except:
+        messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата рождения слушателя\nПроверьте файл!')
+        quit()
 
 
 # Функции для создания сводной таблицы
@@ -134,13 +156,24 @@ def counting_age_distribution(dpo, po):
 
     return general_age_distribution
 
-name_file_data_report = 'единичная ДПО 2 файла.xlsx'
+name_file_data_report = 'data/Отдельные таблицы/ПО_Сварщик_февраль.xlsx'
 path_to_end_folder_report ='data/'
 
 dpo_df = pd.read_excel(name_file_data_report, sheet_name='ДПО')
 po_df = pd.read_excel(name_file_data_report, sheet_name='ПО')
+if 'Текущий_возраст' not in dpo_df.columns or 'Текущий_возраст' not in po_df.columns:
+    dpo_df['Текущий_возраст'] = dpo_df['Дата_рождения_получателя'].apply(calculate_age)
+    dpo_df['Возрастная_категория'] = pd.cut(dpo_df['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
+                                            labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
+                                                    '28-50 лет', '51-65 лет', '66 и больше'])
+    #
+    po_df['Текущий_возраст'] = po_df['Дата_рождения_получателя'].apply(calculate_age)
+    po_df['Возрастная_категория'] = pd.cut(po_df['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
+                                           labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
+                                                   '28-50 лет', '51-65 лет', '66 и больше'])
+    dpo_df['Возрастная_категория'] = dpo_df['Возрастная_категория'].astype(str)
+    po_df['Возрастная_категория'] = po_df['Возрастная_категория'].astype(str)
 
-print(dpo_df.head())
 # Заполняем пустые поля для удобства группировки
 dpo_df = dpo_df.fillna('Не заполнено!!!')
 po_df = po_df.fillna('Не заполнено!!!')

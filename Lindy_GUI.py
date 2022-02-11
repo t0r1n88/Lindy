@@ -96,6 +96,7 @@ def select_files_data_groups():
     global path_to_files_groups
     path_to_files_groups = filedialog.askdirectory()
 
+
 def select_file_params_calculate_data():
     """
     Функция для выбора файла c ячейками которые нужно подсчитать
@@ -113,7 +114,8 @@ def select_files_data_calculate_data():
     """
     global names_files_calculate_data
     # Получаем путь к файлу
-    names_files_calculate_data = filedialog.askopenfilenames(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+    names_files_calculate_data = filedialog.askopenfilenames(
+        filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
 
 
 def select_end_folder_calculate_data():
@@ -149,7 +151,7 @@ def convert_date(cell):
         string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
         return string_date
     except TypeError:
-        messagebox.showerror('ЦОПП Бурятия','Проверьте правильность заполнения ячеек с датой!!!')
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
         quit()
 
 
@@ -158,7 +160,7 @@ def create_initials(fio):
     Функция для создания инициалов для использования в договорах
     формат фио -Будаев Олег Тимурович выходной формат О.Т. Будаев
     """
-    #Создаем 3 переменные
+    # Создаем 3 переменные
 
     initials_firstname = ''
     initials_middlename = ''
@@ -182,7 +184,6 @@ def create_initials(fio):
         lastname = lst_fio[0]
         firstname = lst_fio[1]
 
-
         initials_firstname = firstname[0].upper()
         initials_lastname = lastname
         return f'{initials_firstname}. {initials_lastname}'
@@ -191,7 +192,7 @@ def create_initials(fio):
         initials_lastname = lastname
         return f'{initials_lastname}'
     else:
-        messagebox.showerror('ЦОПП Бурятия','Проверьте правильность написания ФИО в столбце ФИО_именительный')
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность написания ФИО в столбце ФИО_именительный')
         quit()
 
 
@@ -228,8 +229,6 @@ def generate_docs_dpo():
 
         else:
 
-
-
             # Получаем первую строку таблицы, предполагая что раз это групповой список то и данные будут совпадать
             context = data[0]
             # # Добавляем в словарь context словарь со списками значений, формата Список_Название колонки:[значения]
@@ -247,7 +246,6 @@ def generate_docs_dpo():
             messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
-
 
 
 def generate_docs_po():
@@ -279,7 +277,6 @@ def generate_docs_po():
 
                     doc.render(context)
 
-
                     doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия', 'Колонка с ФИО должна называться ФИО_именительный')
@@ -293,7 +290,6 @@ def generate_docs_po():
                 messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
         else:
-
 
             # Итеруемся по списку словарей, чтобы получить список ФИО
             try:
@@ -344,7 +340,7 @@ def generate_docs_other():
         status_rb_type_doc = group_rb_type_doc.get()
         # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
         if status_rb_type_doc == 0:
-        # Создаем в цикле документы
+            # Создаем в цикле документы
             for row in data:
                 doc = DocxTemplate(name_file_template_doc)
                 context = row
@@ -406,14 +402,35 @@ def create_report_svod():
         Проверяем заполнена ли колонка Возрастная категория.Если заполнена, то значит таблица прошла через процедуру create_general_table
         Но нужно обработать случай когда нужно сделать отчет по одной таблице
         """
-
+        if 'Текущий_возраст' not in dpo_df.columns or 'Текущий_возраст' not in po_df.columns:
+            dpo_df['Текущий_возраст'] = dpo_df['Дата_рождения_получателя'].apply(calculate_age)
+            dpo_df['Возрастная_категория_1ПК'] = pd.cut(dpo_df['Текущий_возраст'],
+                                                        [0, 24, 29, 34, 39, 44, 49, 54, 59, 64, 101, 10000],
+                                                        labels=['моложе 25 лет', '25-29', '30-34', '35-39',
+                                                                '40-44', '45-49', '50-54', '55-59', '60-64',
+                                                                '65 и более', 'Возраст  больше 101'])
+            #
+            po_df['Текущий_возраст'] = po_df['Дата_рождения_получателя'].apply(calculate_age)
+            po_df['Возрастная_категория_1ПО'] = pd.cut(po_df['Текущий_возраст'],
+                                                       [0, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+                                                        28,
+                                                        29, 34, 39, 44, 49, 54, 59, 64, 101],
+                                                       labels=['В возрасте моложе 14 лет', '14 лет', '15 лет', '16 лет',
+                                                               '17 лет', '18 лет', '19 лет', '20 лет', '21 год',
+                                                               '22 года',
+                                                               '23 года', '24 года', '25 лет',
+                                                               '26 лет', '27 лет', '28 лет', '29 лет', '30-34 лет',
+                                                               '35-39 лет', '40-44 лет', '45-49 лет', '50-54 лет',
+                                                               '55-59 лет',
+                                                               '60-64 лет',
+                                                               '65 лет и старше'])
+            # Приводим Возрастную категорию к текстовому типу, иначе при fillna возникает ошибка, он не может заполнить категориальные данные
+            dpo_df['Возрастная_категория_1ПК'] = dpo_df['Возрастная_категория_1ПК'].astype(str)
+            po_df['Возрастная_категория_1ПО'] = po_df['Возрастная_категория_1ПО'].astype(str)
 
         # Заполняем пустые поля для удобства группировки
         dpo_df = dpo_df.fillna('Не заполнено!!!')
         po_df = po_df.fillna('Не заполнено!!!')
-
-
-
 
         # Получение общего количества прошедших обучение,количества прошедших по ДПО,по ПО
         total_students, total_students_dpo, total_students_po = counting_total_student(dpo_df, po_df)
@@ -458,7 +475,7 @@ def create_report_svod():
         pie_main.add_data(data, titles_from_data=True)
         pie_main.set_categories(labels)
         pie_main.title = 'Распределение обучившихся'
-        sheet.add_chart(pie_main, 'F2')
+        sheet.add_chart(pie_main, 'F1')
         # # Добавляем таблицу с по направлениям
 
         sheet['A7'] = 'Вид обучения'
@@ -485,30 +502,60 @@ def create_report_svod():
         min_row = wb.active.min_row
         max_row = wb.active.max_row
 
-        # Добавляем таблицу с разбиением по возрастам
-        sheet[f'A{max_row + 2}'] = 'Общее распределение обучающихся по возрасту'
-        age_distribution = counting_age_distribution(dpo_df, po_df)
-        for row in age_distribution.values.tolist():
+        # Добавляем таблицу с разбиением по возрастам 1-ПК
+        sheet[f'A{max_row + 2}'] = 'Распределение обучившихся по возрастным категориям 1-ПК'
+        age_distribution_dpo = counting_age_distribution_dpo(dpo_df)
+        for row in age_distribution_dpo.values.tolist():
             sheet.append(row)
 
         # Добавляем круговую диаграмму
-        pie_age = PieChart()
+        pie_age_dpo = PieChart()
         # Для того чтобы не зависело от количества строк в предыдущих таблицах
-        labels = Reference(sheet, min_col=1, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution))
-        data = Reference(sheet, min_col=2, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution))
+        labels = Reference(sheet, min_col=1, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution_dpo))
+        data = Reference(sheet, min_col=2, min_row=max_row + 3, max_row=max_row + 2 + len(age_distribution_dpo))
         # Для отображения данных на диаграмме
         series = Series(data, title='Series 1')
-        pie_age.append(series)
+        pie_age_dpo.append(series)
 
-        s1 = pie_age.series[0]
+        s1 = pie_age_dpo.series[0]
         s1.dLbls = DataLabelList()
         s1.dLbls.showVal = True
 
-        pie_age.add_data(data, titles_from_data=True)
-        pie_age.set_categories(labels)
-        pie_age.title = 'Распределение обучившихся по возрастным категориям'
+        pie_age_dpo.add_data(data, titles_from_data=True)
+        pie_age_dpo.set_categories(labels)
+        pie_age_dpo.title = 'Распределение обучившихся по возрастным категориям 1-ПК'
 
-        sheet.add_chart(pie_age, f'F{max_row + 2}')
+        sheet.add_chart(pie_age_dpo, f'F{max_row + 2}')
+
+        min_column = wb.active.min_column
+        max_column = wb.active.max_column
+        min_row = wb.active.min_row
+        max_row = wb.active.max_row
+
+        # Добавляем таблицу с разбиением по возрастам 1-ПО
+        sheet[f'A{max_row + 4}'] = 'Распределение обучившихся по возрастным категориям 1-ПО'
+        age_distribution_po = counting_age_distribution_po(po_df)
+        for row in age_distribution_po.values.tolist():
+            sheet.append(row)
+
+        # Добавляем круговую диаграмму
+        pie_age_po = PieChart()
+        # Для того чтобы не зависело от количества строк в предыдущих таблицах
+        labels = Reference(sheet, min_col=1, min_row=max_row + 5, max_row=max_row + 4 + len(age_distribution_po))
+        data = Reference(sheet, min_col=2, min_row=max_row + 5, max_row=max_row + 4 + len(age_distribution_po))
+        # Для отображения данных на диаграмме
+        series = Series(data, title='Series 1')
+        pie_age_po.append(series)
+
+        s1 = pie_age_po.series[0]
+        s1.dLbls = DataLabelList()
+        s1.dLbls.showVal = True
+
+        pie_age_po.add_data(data, titles_from_data=True)
+        pie_age_po.set_categories(labels)
+        pie_age_po.title = 'Распределение обучившихся по возрастным категориям 1-ПО'
+
+        sheet.add_chart(pie_age_po, f'F{max_row + 5}')
 
         min_column = wb.active.min_column
         max_column = wb.active.max_column
@@ -517,6 +564,7 @@ def create_report_svod():
 
         sheet.column_dimensions['A'].width = 50
         sheet.column_dimensions['B'].width = 30
+
         # Сохраняем файл
         t = time.localtime()
         current_time = time.strftime('%H_%M_%S', t)
@@ -525,11 +573,11 @@ def create_report_svod():
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except ValueError:
         messagebox.showerror('ЦОПП Бурятия', 'Проверьте названия листов! Должно быть ДПО и ПО')
-    except KeyError:
-        messagebox.showerror('ЦОПП Бурятия', 'Названия колонок не совпадают')
-    except:
-        messagebox.showerror('ЦОПП Бурятия',
-                             'Возникла ошибка')
+    # except KeyError:
+    #     messagebox.showerror('ЦОПП Бурятия', 'Названия колонок не совпадают')
+    # except:
+    #     messagebox.showerror('ЦОПП Бурятия',
+    #                          'Возникла ошибка')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Сводный отчет успешно создан!')
 
@@ -559,22 +607,26 @@ def create_general_table():
                     df_dpo = pd.concat([df_dpo, temp_dpo], ignore_index=True)
                     df_po = pd.concat([df_po, temp_po], ignore_index=True)
 
-
         # Добавляем 2 колонки с характеристиками возраста
         df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
-        df_dpo['Возрастная_категория'] = pd.cut(df_dpo['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
-                                                labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
-                                                        '28-50 лет', '51-65 лет', '66 и больше'])
+        df_dpo['Возрастная_категория_1ПК'] = pd.cut(df_dpo['Текущий_возраст'], [0, 24, 29, 34, 39, 44, 49, 54, 59, 64,101,10000],
+                                                    labels=['моложе 25 лет', '25-29', '30-34', '35-39',
+                                                            '40-44', '45-49', '50-54', '55-59', '60-64', '65 и более','Возраст  больше 101'])
         #
         df_po['Текущий_возраст'] = df_po['Дата_рождения_получателя'].apply(calculate_age)
-        df_po['Возрастная_категория'] = pd.cut(df_po['Текущий_возраст'], [0, 11, 15, 18, 27, 50, 65, 100],
-                                               labels=['Младший возраст', '12-15 лет', '16-18 лет', '19-27 лет',
-                                                       '28-50 лет', '51-65 лет', '66 и больше'])
+        df_po['Возрастная_категория_1ПО'] = pd.cut(df_po['Текущий_возраст'],
+                                                   [0, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+                                                    29, 34, 39, 44, 49, 54, 59, 64, 101],
+                                                   labels=['В возрасте моложе 14 лет', '14 лет', '15 лет', '16 лет',
+                                                           '17 лет', '18 лет', '19 лет', '20 лет', '21 год', '22 года',
+                                                           '23 года', '24 года', '25 лет',
+                                                           '26 лет', '27 лет', '28 лет', '29 лет', '30-34 лет',
+                                                           '35-39 лет', '40-44 лет','45-49 лет', '50-54 лет', '55-59 лет',
+                                                           '60-64 лет',
+                                                           '65 лет и старше'])
 
-        df_po.to_excel('PO.xlsx')
         # Код сохранения датафрейма в разные листы и сохранением форматирования  взят отсюда https://azzrael.ru/python-pandas-openpyxl-excel
         wb = openpyxl.load_workbook(name_file_template_table)
-
 
         # Записываем лист ДПО
 
@@ -583,7 +635,7 @@ def create_general_table():
                 wb['ДПО'].cell(2 + ir, 1 + ic).value = df_dpo.iloc[ir][ic]
 
         wb['ДПО']['BN1'] = 'Текущий_возраст'
-        wb['ДПО']['BO1'] = 'Возрастная_категория'
+        wb['ДПО']['BO1'] = 'Возрастная_категория_1ПК'
 
         # Записываем лист ПО
 
@@ -591,8 +643,7 @@ def create_general_table():
             for ic in range(0, len(df_po.iloc[ir])):
                 wb['ПО'].cell(2 + ir, 1 + ic).value = df_po.iloc[ir][ic]
         wb['ПО']['BG1'] = 'Текущий_возраст'
-        wb['ПО']['BH1'] = 'Возрастная_категория'
-
+        wb['ПО']['BH1'] = 'Возрастная_категория_1ПО'
 
         # Получаем текущее время для того чтобы использовать в названии
 
@@ -642,7 +693,8 @@ def counting_type_of_training(dpo, po):
                                                     aggfunc='count')
         dpo_svod_category_and_name = dpo_svod_category_and_name.reset_index()
     else:
-        dpo_svod_category_and_name = pd.DataFrame(columns=['Направление подготовки', 'Название программы', 'Количество обученных'])
+        dpo_svod_category_and_name = pd.DataFrame(
+            columns=['Направление подготовки', 'Название программы', 'Количество обученных'])
 
     if po.shape[0] > 0:
         po_svod_category_and_name = pd.pivot_table(po,
@@ -683,8 +735,8 @@ def counting_total_sex(dpo, po):
 
     if po.shape[0] > 0:
         po_total_sex = pd.pivot_table(po, index=['Пол_получателя'],
-                                  values=['ФИО_именительный'],
-                                  aggfunc='count')
+                                      values=['ФИО_именительный'],
+                                      aggfunc='count')
         po_total_sex = po_total_sex.reset_index()
     else:
         po_total_sex = pd.DataFrame(columns=['Пол', 'Количество'])
@@ -699,39 +751,37 @@ def counting_total_sex(dpo, po):
     return sum_general_total_sex
 
 
-def counting_age_distribution(dpo, po):
+def counting_age_distribution_dpo(dpo):
     """
     Функция для подсчета количества обучающихся по возрастным категориям
     :param dpo: датафрейм ДПО
-    :param po: датафрейм ПО
     :return: датафрейм сводной таблицы
     """
     # Создаем сводные таблицы
     if dpo.shape[0] > 0:
-        dpo_age_distribution = pd.pivot_table(dpo, index=['Возрастная_категория'],
+        dpo_age_distribution = pd.pivot_table(dpo, index=['Возрастная_категория_1ПК'],
                                               values=['ФИО_именительный'],
                                               aggfunc='count')
         dpo_age_distribution = dpo_age_distribution.reset_index()
     else:
-        dpo_age_distribution = pd.DataFrame(columns=['Возрастная_категория', 'Количество'])
+        dpo_age_distribution = pd.DataFrame(columns=['Возрастная_категория_1ПК', 'Количество'])
+
+    return dpo_age_distribution
+
+def counting_age_distribution_po(po):
+    """
+    Функция для подсчета количества обучающихся по возрастным категориям
+    :param dpo: датафрейм ПО
+    :return: датафрейм сводной таблицы
+    """
     if po.shape[0] > 0:
-        po_age_distribution = pd.pivot_table(po, index=['Возрастная_категория'],
+        po_age_distribution = pd.pivot_table(po, index=['Возрастная_категория_1ПО'],
                                              values=['ФИО_именительный'],
                                              aggfunc='count')
         po_age_distribution = po_age_distribution.reset_index()
     else:
-        po_age_distribution = pd.DataFrame(columns=['Возрастная_категория', 'Количество'])
-    # Меняем колонки
-    dpo_age_distribution.columns = ['Возрастная_категория', 'Количество']
-    po_age_distribution.columns = ['Возрастная_категория', 'Количество']
-
-    # Создаем единую сводную таблицу
-    general_age_distribution = pd.concat([dpo_age_distribution, po_age_distribution], ignore_index=True)
-    # Повторно группируем чтобы соединить категории из обеих таблиц
-    general_age_distribution = general_age_distribution.groupby(['Возрастная_категория']).sum().reset_index()
-
-    return general_age_distribution
-
+        po_age_distribution = pd.DataFrame(columns=['Возрастная_категория_1ПО', 'Количество'])
+    return po_age_distribution
 
 # Функции обработки данных для вкладки Обработка данных
 def calculate_data():
@@ -745,7 +795,6 @@ def calculate_data():
     current_time = time.strftime('%H_%M_%S')
     # Состояние чекбокса
     mode_text = mode_text_value.get()
-
 
     # Получаем название обрабатываемого листа
     name_list_df = pd.read_excel(name_file_params_calculate_data, nrows=2)
@@ -803,7 +852,7 @@ def calculate_data():
                 result_dct[key] += check_data(sheet[cell].value, mode_text)
                 new_row[key] = sheet[cell].value
 
-            temp_df = pd.DataFrame(new_row,index=['temp_index'])
+            temp_df = pd.DataFrame(new_row, index=['temp_index'])
             check_df = pd.concat([check_df, temp_df], ignore_index=True)
 
             # check_df = check_df.append(new_row, ignore_index=True)
@@ -841,8 +890,6 @@ def calculate_data():
     else:
         messagebox.showinfo('ЦОПП Бурятия',
                             f'Обработка файлов успешно завершена!\nОбработано файлов:  {count} из {quantity_files}')
-
-
 
 
 def count_text_value(df):
@@ -906,9 +953,6 @@ def check_data(cell, text_mode):
             return 0
 
 
-
-
-
 if __name__ == '__main__':
     window = Tk()
     window.title('ЦОПП Бурятия')
@@ -932,7 +976,6 @@ if __name__ == '__main__':
     tab_control.add(tab_create_general_table, text='Создание сводной таблицы')
     tab_control.pack(expand=1, fill='both')
 
-
     # Создаем вкладку создания отчетов
     tab_create_report = ttk.Frame(tab_control)
     tab_control.add(tab_create_report, text='Создание отчетов')
@@ -942,8 +985,6 @@ if __name__ == '__main__':
     tab_calculate_data = ttk.Frame(tab_control)
     tab_control.add(tab_calculate_data, text='Обработка данных')
     tab_control.pack(expand=1, fill='both')
-
-
 
     # Добавляем виджеты на вкладку Создание документов
     # Создаем метку для описания назначения программы
@@ -1098,7 +1139,6 @@ if __name__ == '__main__':
                                       )
     btn_create_general_table.grid(column=0, row=6, padx=10, pady=10)
 
-
     # Добавляем виджеты на вклдаку Обработки данных
     # Создаем метку для описания назначения программы
     lbl_hello = Label(tab_calculate_data,
@@ -1139,10 +1179,10 @@ if __name__ == '__main__':
     # Создаем чекбокс для выбора режима подсчета
 
     chbox_mode_calculate = tkinter.Checkbutton(tab_calculate_data,
-                                          text='Поставьте галочку, если вам нужно посчитать текстовые данные ',
-                                          variable=mode_text_value,
-                                          offvalue='No',
-                                          onvalue='Yes')
+                                               text='Поставьте галочку, если вам нужно посчитать текстовые данные ',
+                                               variable=mode_text_value,
+                                               offvalue='No',
+                                               onvalue='Yes')
     chbox_mode_calculate.grid(column=0, row=5, padx=10, pady=10)
 
     # Создаем кнопку для запуска подсчета файлов
@@ -1151,6 +1191,5 @@ if __name__ == '__main__':
                            command=calculate_data
                            )
     btn_calculate.grid(column=0, row=6, padx=10, pady=10)
-
 
     window.mainloop()
