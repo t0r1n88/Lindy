@@ -1,5 +1,5 @@
 import tkinter
-
+import numpy as np
 import pandas as pd
 import os
 from docxtpl import DocxTemplate
@@ -8,6 +8,9 @@ from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
 import openpyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.styles import Font
+from openpyxl.styles import Alignment
 import time
 import datetime
 from datetime import date
@@ -19,7 +22,7 @@ warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+    """ Get absolute path to resource, works for dev and f  or PyInstaller """
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -386,7 +389,1115 @@ def create_report_one_pk():
     Функция для создания отчета 1-ПК
     :return:
     """
-    pass
+
+    try:
+        df_dpo = pd.read_excel(name_file_data_report, sheet_name='ДПО')
+
+        # Создаем шрифт которым будем выделять названия таблиц
+        font_name_table = Font(name='Arial Black', size=15, italic=True)
+
+        # Создаем файл excel
+        wb = openpyxl.Workbook()
+        # Создаем лист раздела 1.3
+        wb.create_sheet(title='Раздел 1.3', index=0)
+        wb.create_sheet(title='2.1 По категориям,ПК и ПП', index=1)
+        wb.create_sheet(title='Раздел 2.1 Модульные', index=2)
+        wb.create_sheet(title='Раздел 2.1 Женщины', index=3)
+        wb.create_sheet(title='Раздел 2.1 28,29,30', index=4)
+        wb.create_sheet(title='Раздел 2.2 Общая чис', index=5)
+        wb.create_sheet(title='Раздел 2.2 Бюджеты', index=6)
+        wb.create_sheet(title='Раздел 2.2 Источник средств', index=7)
+        wb.create_sheet(title='Раздел 2.3.1 Програм', index=8)
+        wb.create_sheet(title='Раздел 2.3.1 Всего', index=9)
+        wb.create_sheet(title='2.3.1 По видам и категориям', index=10)
+        wb.create_sheet(title='2.3.1 По видам и образованию', index=11)
+        wb.create_sheet(title='2.3.1 По видам и форме обучения', index=12)
+        wb.create_sheet(title='Раздел 2.3.2 Програм', index=13)
+        wb.create_sheet(title='Раздел 2.3.2 Всего', index=14)
+        wb.create_sheet(title='2.3.2 По видам и категориям', index=15)
+        wb.create_sheet(title='2.3.2 По видам и образованию', index=16)
+        wb.create_sheet(title='2.3.2 По видам и форме обучения', index=17)
+        wb.create_sheet(title='Раздел 2.4', index=18)
+        wb.create_sheet(title='Раздел 2.5', index=19)
+
+        # Раздел 1.3
+        # Количество программ по каждому виду обучения
+        # группируем. Так как нам нужны текстовые данные то применяем создаем строку с помощью join
+        quantity_program_on_type_provisional = df_dpo.groupby('Наименование_дополнительной_профессиональной_программы').agg(
+            {
+                'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка': lambda
+                    x: ','.join(
+                    x)})
+
+        # Применяем к полученной серии функцию разделения по запятой. Предполо
+        quantity_program_on_type_provisional[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'] = \
+            quantity_program_on_type_provisional[
+                'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'].apply(
+                lambda x: x.split(',')[0])
+
+        df_1_3 = quantity_program_on_type_provisional[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'].value_counts().to_frame()
+        # Раздел 1.3
+
+        # Создаем пустую колонку 4
+        temp_df = pd.DataFrame(columns=['4'])
+        df_1_3 = pd.concat([df_1_3, temp_df], axis=1)
+        # переименываем первую колонку
+        df_1_3.rename(columns={
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка': 'Число реализованных программ'},
+            inplace=True)
+
+        group_quantity_student_program = df_dpo.groupby(
+            ['Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка']).size()
+
+        # Добавляем колонку 5- всего слушателей
+        df_1_3['Всего слушателей'] = group_quantity_student_program
+
+        # Подсчет сетевой формы
+        df_dpo_network = df_dpo[df_dpo['Использование_сетевой_формы_обучения'] == 'Сетевая форма']
+
+        group_quantity_network_program_provisional = df_dpo_network.groupby(
+            'Наименование_дополнительной_профессиональной_программы').agg({
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка': lambda
+                x: ','.join(x)})
+        # Применяем к полученной серии функцию разделения по запятой. Предполо
+        group_quantity_network_program_provisional[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'] = \
+            group_quantity_network_program_provisional[
+                'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'].apply(
+                lambda x: x.split(',')[0])
+        df_1_3['Число программ сетевая форма'] = group_quantity_network_program_provisional[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'].value_counts().to_frame()
+
+        # Считаем число слушателей на сетевых программах
+        df_1_3['Численость слушателей сетевый программ'] = df_dpo_network.groupby(
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка').agg(
+            {'ФИО_именительный': 'count'})
+
+        # # Добавляем 4 пустых столбца
+        # temp_df = pd.DataFrame(columns=['8','9','10','11','12'])
+        # df_1_3 = pd.concat([df_1_3,temp_df],axis=1)
+
+        # Считаем дистанционные технологии
+        df_dpo_distant = df_dpo[df_dpo['Использование_ЭО_или_ДОТ'] != 'Без применения ЭО или ДОТ']
+        group_quantity_distant = df_dpo_distant.groupby('Наименование_дополнительной_профессиональной_программы').agg({
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка': lambda
+                x: ','.join(
+                x)})
+
+        # Применяем к полученной серии функцию разделения по запятой.
+        group_quantity_distant[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'] = \
+            group_quantity_distant[
+                'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'].apply(
+                lambda x: x.split(',')[0])
+        df_1_3['Число программ ЭО и ДОТ'] = group_quantity_distant[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'].value_counts().to_frame()
+
+        # Считаем количество слушателей
+        df_1_3['Численность слушателей ЭО И ДОТ'] = df_dpo_distant.groupby(
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка').agg(
+            {'ФИО_именительный': 'count'})
+
+        # Считаем только тех кто учился на программах исключительно ЭО и ДОТ
+        df_dpo_distant_only_dot = df_dpo_distant[df_dpo_distant['Использование_ЭО_или_ДОТ'] == 'Исключительно с ЭО ли ДОТ']
+        df_1_3['Численность слушателей только ЭО и ДОТ'] = df_dpo_distant_only_dot.groupby(
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка').agg(
+            {'ФИО_именительный': 'count'})
+
+        finish_df_1_3 = df_1_3.reset_index()
+
+        finish_df_1_3.columns = ['Вид образовательных программ',
+                                 'Число реализованных образовательных программ всего,единиц',
+                                 'из них прошли профессионально-общественную аккредитацию',
+                                 'Всего слушателей, обученных по программам, человек',
+                                 'число программ(из графы 3) реализованных с использованием сетевой формы',
+                                 'численность слушателей обученных(из графы 5) по программам с использованием сетевой формы-всего',
+                                 'число программ(из графы 3),реализованных с применением ЭО или ДОТ',
+                                 'Численность слушателей обученных(из графы 5) по программам с применением ЭО и ДОТ',
+                                 'в том числе(из графы 14) с применением исключительно ЭО и ДОТ']
+
+        for r in dataframe_to_rows(finish_df_1_3, index=False, header=True):
+            wb['Раздел 1.3'].append(r)
+
+        # Устанавливаем ширину колоноки устанавливаем перенос
+        wb['Раздел 1.3'].column_dimensions['A'].width = 30
+        wb['Раздел 1.3']['A1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['B'].width = 30
+        wb['Раздел 1.3']['B1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['C'].width = 30
+        wb['Раздел 1.3']['C1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['D'].width = 30
+        wb['Раздел 1.3']['D1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['E'].width = 30
+        wb['Раздел 1.3']['E1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['F'].width = 30
+        wb['Раздел 1.3']['F1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['G'].width = 30
+        wb['Раздел 1.3']['G1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['H'].width = 30
+        wb['Раздел 1.3']['H1'].alignment = Alignment(wrap_text=True)
+        wb['Раздел 1.3'].column_dimensions['I'].width = 30
+        wb['Раздел 1.3']['I1'].alignment = Alignment(wrap_text=True)
+
+        # раздел 2.1  Сведения о численности слушателей обученных по доп профессиональным программам. Создаем копию исходного датафрема
+        df_2_1 = df_dpo.copy()
+        # Создаем колонку для удобства подсчета
+        df_2_1['for_counting'] = 1.0
+
+        # Считаем раздел 2.1 По категориям,ПК и ПП Название листа Раздел 2.1 По категориям,ПК и ПП
+
+        df_2_1_pkpo = pd.pivot_table(df_2_1, index=['Категория_слушателя', 'Место_работы_слушателя',
+                                                    'Является_ли_слушатель_руководителем'],
+                                     columns=[
+                                         'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                     values=['for_counting'],
+                                     aggfunc='sum')
+
+        # Удаляем мультиколонку for counting
+        df_2_1_pkpo.columns = df_2_1_pkpo.columns.droplevel()
+
+        # заполняем NaN нулями чтобы просуммировать
+        df_2_1_pkpo.fillna(0.0, inplace=True)
+
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_pkpo.columns) == 1:
+            df_2_1_pkpo['Всего слушателей_temp'] = df_2_1_pkpo.iloc[:, 0]
+        else:
+            df_2_1_pkpo['Всего слушателей_temp'] = df_2_1_pkpo['Повышение квалификации'] + df_2_1_pkpo[
+                'Профессиональная переподготовка']
+
+        # Перемещаем колонку Всего слушателей
+        df_2_1_pkpo.insert(0, 'Всего слушателей', df_2_1_pkpo['Всего слушателей_temp'])
+
+        # Удаляем временную колонку
+        df_2_1_pkpo.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+
+        df_2_1_pkpo = df_2_1_pkpo.reset_index()
+
+        # Заменяем нули пустыми значениями
+        df_2_1_pkpo.replace(0.0, np.NaN, inplace=True)
+
+        wb['2.1 По категориям,ПК и ПП'][f'A1'] = 'Слушателей обученных по дополнительным профессиональным программам'
+        wb['2.1 По категориям,ПК и ПП'][f'A1'].font = font_name_table
+
+        # Сохраняем датафрейм с подсчетом по пк и пп в лист Раздел 2.1 По категориям,ПК и ПП
+        for r in dataframe_to_rows(df_2_1_pkpo, index=False, header=True):
+            if len(r) != 1:
+                wb['2.1 По категориям,ПК и ПП'].append(r)
+
+        # Устанавливаем размер колонок листа Раздел 2.1 По категориям,ПК и ПП
+        wb['2.1 По категориям,ПК и ПП'].column_dimensions['A'].width = 50
+        wb['2.1 По категориям,ПК и ПП'].column_dimensions['B'].width = 50
+        wb['2.1 По категориям,ПК и ПП'].column_dimensions['C'].width = 30
+        wb['2.1 По категориям,ПК и ПП'].column_dimensions['D'].width = 30
+        wb['2.1 По категориям,ПК и ПП'].column_dimensions['E'].width = 30
+        wb['2.1 По категориям,ПК и ПП'].column_dimensions['F'].width = 30
+
+        # Считаем слушателей по модульным программам с вариативным выбором название листа
+        # Раздел 2.1 Модульные по категориям,ПК и ПП
+
+        df_2_1_module_pkpo_yes = df_2_1[df_2_1['Модульная_программа_с_вариативным_выбором'] == 'да']
+
+        df_2_1_module_pkpo = pd.pivot_table(df_2_1_module_pkpo_yes,
+                                            index=['Категория_слушателя', 'Место_работы_слушателя',
+                                                   'Является_ли_слушатель_руководителем'],
+                                            columns=[
+                                                'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                            values=['for_counting'],
+                                            aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_module_pkpo.columns = df_2_1_module_pkpo.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_module_pkpo.fillna(0.0, inplace=True)
+
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_module_pkpo.columns) == 1:
+            df_2_1_module_pkpo['Всего слушателей_temp'] = df_2_1_module_pkpo.iloc[:, 0]
+        else:
+            df_2_1_module_pkpo['Всего слушателей_temp'] = df_2_1_module_pkpo['Повышение квалификации'] + df_2_1_module_pkpo[
+                'Профессиональная переподготовка']
+
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_module_pkpo.insert(0, 'Всего слушателей', df_2_1_module_pkpo['Всего слушателей_temp'])
+
+        # Удаляем лишнюю колонку
+        df_2_1_module_pkpo.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+
+        df_2_1_module_pkpo = df_2_1_module_pkpo.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_module_pkpo.replace(0.0, np.NaN, inplace=True)
+
+        wb['Раздел 2.1 Модульные'][f'A1'] = 'Обучено слушателей по модульным программам с вариативным выбором'
+        wb['Раздел 2.1 Модульные'][f'A1'].font = font_name_table
+
+        # Сохраняем датафрейм с подсчетом слушателей модульных программ  пк и пп  в лист Раздел 2.1
+        for r in dataframe_to_rows(df_2_1_module_pkpo, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 Модульные'].append(r)
+        wb['Раздел 2.1 Модульные'].column_dimensions['A'].width = 50
+        wb['Раздел 2.1 Модульные'].column_dimensions['B'].width = 50
+        wb['Раздел 2.1 Модульные'].column_dimensions['C'].width = 50
+        wb['Раздел 2.1 Модульные'].column_dimensions['D'].width = 50
+        wb['Раздел 2.1 Модульные'].column_dimensions['E'].width = 50
+        wb['Раздел 2.1 Модульные'].column_dimensions['F'].width = 50
+
+        # Считаем слушателей женщин
+        # Раздел 2.1 Женщины
+
+        wb['Раздел 2.1 Женщины'][f'A1'] = 'Обучено женщин слушателей'
+        wb['Раздел 2.1 Женщины'][f'A1'].font = font_name_table
+
+        # Считаем женщин
+        df_2_1_women_yes = df_2_1[df_2_1['Пол_получателя'] == 'Жен']
+
+        df_2_1_women = pd.pivot_table(df_2_1_women_yes,
+                                      index=['Категория_слушателя', 'Место_работы_слушателя',
+                                             'Является_ли_слушатель_руководителем'],
+                                      columns=[
+                                          'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                      values=['for_counting'],
+                                      aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_women.columns = df_2_1_women.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_women.fillna(0.0, inplace=True)
+
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_women.columns) == 1:
+            df_2_1_women['Всего слушателей_temp'] = df_2_1_women.iloc[:, 0]
+        else:
+            df_2_1_women['Всего слушателей_temp'] = df_2_1_women['Повышение квалификации'] + df_2_1_women[
+                'Профессиональная переподготовка']
+
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_women.insert(0, 'Всего женщин-слушателей', df_2_1_women['Всего слушателей_temp'])
+
+        # Удаляем лишнюю колонку
+        df_2_1_women.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+
+        df_2_1_women = df_2_1_women.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_women.replace(0.0, np.NaN, inplace=True)
+
+        # Сохраняем датафрейм с подсчетом женщин  по пк и пп в лист Раздел 2.1
+        for r in dataframe_to_rows(df_2_1_women, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 Женщины'].append(r)
+
+        # Устанавливаем размер колонок листа Раздел 2.1 Женщины
+        wb['Раздел 2.1 Женщины'].column_dimensions['A'].width = 50
+        wb['Раздел 2.1 Женщины'].column_dimensions['B'].width = 50
+        wb['Раздел 2.1 Женщины'].column_dimensions['C'].width = 30
+        wb['Раздел 2.1 Женщины'].column_dimensions['D'].width = 30
+        wb['Раздел 2.1 Женщины'].column_dimensions['E'].width = 30
+        wb['Раздел 2.1 Женщины'].column_dimensions['F'].width = 30
+
+        # Создаем датафрейм для строк 28 и 29 по обычным программам
+
+        # Раздел 2.1 Стр 28,29,30
+        # Создаем список категорий слушателей которых нужно посчитать
+        lst_cat = ['работник предприятия или организации', 'работник образовательной организации',
+                   'лицо, замещающее государственную должность или должность ГГС'
+            , 'лицо,замещающее муниципальную должность или должность муниципальной службы',
+                   'лицо,уволенное с военной службы',
+                   'незанятое лицо по направлению СЗ', 'другое']
+
+        df_2_1_28_29_base = df_2_1.loc[df_2_1['Категория_слушателя'].isin(lst_cat)]
+
+        df_2_1_28_29 = pd.pivot_table(df_2_1_28_29_base, index=['Уровень_образования_ВО_СПО'],
+                                      columns=[
+                                          'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                      values=['for_counting'],
+                                      aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_28_29.columns = df_2_1_28_29.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_28_29.fillna(0.0, inplace=True)
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_28_29.columns) == 1:
+            df_2_1_28_29['Всего слушателей_temp'] = df_2_1_28_29.iloc[:, 0]
+        else:
+            df_2_1_28_29['Всего слушателей_temp'] = df_2_1_28_29['Повышение квалификации'] + df_2_1_28_29[
+                'Профессиональная переподготовка']
+
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_28_29.insert(0, 'Всего слушателей', df_2_1_28_29['Всего слушателей_temp'])
+        # Удаляем лишнюю колонку
+        df_2_1_28_29.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+        df_2_1_28_29 = df_2_1_28_29.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_28_29.replace(0.0, np.NaN, inplace=True)
+
+        # Добавляем заголовок
+        wb['Раздел 2.1 28,29,30'][f'A1'] = 'Образование слушателей обученных по дополнительным профессиональным программам'
+        wb['Раздел 2.1 28,29,30'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_1_28_29, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 28,29,30'].append(r)
+
+        # # Создаем датафрейм для строк 28 и 29 по модульным программам с вариативным выбором
+        df_2_1_28_29_module_base = df_2_1_28_29_base[df_2_1_28_29_base['Модульная_программа_с_вариативным_выбором'] == 'да']
+
+        df_2_1_28_29_module = pd.pivot_table(df_2_1_28_29_module_base, index=['Уровень_образования_ВО_СПО'],
+                                             columns=[
+                                                 'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                             values=['for_counting'],
+                                             aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_28_29_module.columns = df_2_1_28_29_module.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_28_29_module.fillna(0.0, inplace=True)
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_28_29_module.columns) == 1:
+            df_2_1_28_29_module['Всего слушателей_temp'] = df_2_1_28_29_module.iloc[:, 0]
+        else:
+            df_2_1_28_29_module['Всего слушателей_temp'] = df_2_1_28_29_module['Повышение квалификации'] + \
+                                                           df_2_1_28_29_module[
+                                                               'Профессиональная переподготовка']
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_28_29_module.insert(0, 'Всего слушателей', df_2_1_28_29_module['Всего слушателей_temp'])
+        # Удаляем лишнюю колонку
+        df_2_1_28_29_module.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+        df_2_1_28_29_module = df_2_1_28_29_module.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_28_29_module.replace(0.0, np.NaN, inplace=True)
+
+        # Создаем промежуток
+        max_row_28_29_module = wb['Раздел 2.1 28,29,30'].max_row
+        wb['Раздел 2.1 28,29,30'][
+            f'A{max_row_28_29_module + 2}'] = 'Образование слушателей обученных по модульным программам с вариативным выбором'
+        wb['Раздел 2.1 28,29,30'][f'A{max_row_28_29_module + 2}'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_1_28_29_module, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 28,29,30'].append(r)
+
+        # Создаем датафрейм 28 и 29 для женщин
+        df_2_1_28_29_women_base = df_2_1_28_29_base[df_2_1_28_29_base['Пол_получателя'] == 'Жен']
+
+        df_2_1_28_29_women = pd.pivot_table(df_2_1_28_29_women_base, index=['Уровень_образования_ВО_СПО'],
+                                            columns=[
+                                                'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                            values=['for_counting'],
+                                            aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_28_29_women.columns = df_2_1_28_29_women.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_28_29_women.fillna(0.0, inplace=True)
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_28_29_women.columns) == 1:
+            df_2_1_28_29_women['Всего слушателей_temp'] = df_2_1_28_29_women.iloc[:, 0]
+        else:
+            df_2_1_28_29_women['Всего слушателей_temp'] = df_2_1_28_29_women['Повышение квалификации'] + df_2_1_28_29_women[
+                'Профессиональная переподготовка']
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_28_29_women.insert(0, 'Всего женщин-слушателей', df_2_1_28_29_women['Всего слушателей_temp'])
+        # Удаляем лишнюю колонку
+        df_2_1_28_29_women.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+        df_2_1_28_29_women = df_2_1_28_29_women.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_28_29_women.replace(0.0, np.NaN, inplace=True)
+
+        # Создаем промежуток
+        max_row_28_29_women = wb['Раздел 2.1 28,29,30'].max_row
+        wb['Раздел 2.1 28,29,30'][
+            f'A{max_row_28_29_women + 2}'] = 'Образование женщин обученных по дополнительным профессиональным программам'
+        wb['Раздел 2.1 28,29,30'][f'A{max_row_28_29_women + 2}'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_1_28_29_women, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 28,29,30'].append(r)
+
+        # Создаем датафреймы для строки 30
+        # Создаем список категорий слушателей которых нужно посчитать
+        lst_cat_30 = ['работник предприятия или организации', 'работник образовательной организации',
+                      'лицо, замещающее государственную должность или должность ГГС'
+            , 'лицо,замещающее муниципальную должность или должность муниципальной службы',
+                      'лицо,уволенное с военной службы',
+                      'незанятое лицо по направлению СЗ', 'студент ВО', 'другое']
+
+        df_2_1_30_base = df_2_1.loc[df_2_1['Категория_слушателя'].isin(lst_cat_30)]
+
+        df_2_1_30_base = df_2_1_30_base[df_2_1_30_base['Для_освоения_ДПП_требуется_наличие_ВО'] == 'требуется ВО']
+
+        df_2_1_30 = pd.pivot_table(df_2_1_30_base, index=['Уровень_образования_ВО_СПО'],
+                                   columns=[
+                                       'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                   values=['for_counting'],
+                                   aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_30.columns = df_2_1_30.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_30.fillna(0.0, inplace=True)
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_30.columns) == 1:
+            df_2_1_30['Всего слушателей_temp'] = df_2_1_30.iloc[:, 0]
+        else:
+            df_2_1_30['Всего слушателей_temp'] = df_2_1_30['Повышение квалификации'] + df_2_1_30[
+                'Профессиональная переподготовка']
+
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_30.insert(0, 'Всего слушателей', df_2_1_30['Всего слушателей_temp'])
+        # Удаляем лишнюю колонку
+        df_2_1_30.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+        df_2_1_30 = df_2_1_30.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_30.replace(0.0, np.NaN, inplace=True)
+
+        # Создаем промежуток
+        max_row_30 = wb['Раздел 2.1 28,29,30'].max_row
+        wb['Раздел 2.1 28,29,30'][
+            f'A{max_row_30 + 5}'] = 'Всего слушателей обученных по программам для освоения которых требуется ВО'
+        wb['Раздел 2.1 28,29,30'][f'A{max_row_30 + 5}'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_1_30, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 28,29,30'].append(r)
+
+        # создаем датафрейм строки 30 для модульных программ
+        df_2_1_30_module_base = df_2_1_30_base[df_2_1_30_base['Модульная_программа_с_вариативным_выбором'] == 'да']
+
+        df_2_1_30_module = pd.pivot_table(df_2_1_30_module_base, index=['Уровень_образования_ВО_СПО'],
+                                          columns=[
+                                              'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                          values=['for_counting'],
+                                          aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_30_module.columns = df_2_1_30_module.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_30_module.fillna(0.0, inplace=True)
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_30_module.columns) == 1:
+            df_2_1_30_module['Всего слушателей_temp'] = df_2_1_30_module.iloc[:, 0]
+        else:
+            df_2_1_30_module['Всего слушателей_temp'] = df_2_1_30_module['Повышение квалификации'] + df_2_1_30_module[
+                'Профессиональная переподготовка']
+
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_30_module.insert(0, 'Всего слушателей', df_2_1_30_module['Всего слушателей_temp'])
+        # Удаляем лишнюю колонку
+        df_2_1_30_module.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+        df_2_1_30_module = df_2_1_30_module.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_30_module.replace(0.0, np.NaN, inplace=True)
+
+        # Создаем промежуток
+        max_row_30_module = wb['Раздел 2.1 28,29,30'].max_row
+        wb['Раздел 2.1 28,29,30'][
+            f'A{max_row_30_module + 2}'] = 'Всего слушателей обученных по модульным программам для освоения которых требуется ВО'
+        wb['Раздел 2.1 28,29,30'][f'A{max_row_30_module + 2}'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_1_30_module, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 28,29,30'].append(r)
+
+        # создаем датафрейм женщин по строке 30
+        df_2_1_30_women_base = df_2_1_30_base[df_2_1_30_base['Пол_получателя'] == 'Жен']
+
+        df_2_1_30_women = pd.pivot_table(df_2_1_30_women_base, index=['Уровень_образования_ВО_СПО'],
+                                         columns=[
+                                             'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                         values=['for_counting'],
+                                         aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_1_30_women.columns = df_2_1_30_women.columns.droplevel()
+
+        # Заполняем NaN
+        df_2_1_30_women.fillna(0.0, inplace=True)
+        # Считаем в зависимости от количества колонок
+        if len(df_2_1_30_women.columns) == 1:
+            df_2_1_30_women['Всего слушателей_temp'] = df_2_1_30_women.iloc[:, 0]
+        else:
+            df_2_1_30_women['Всего слушателей_temp'] = df_2_1_30_women['Повышение квалификации'] + df_2_1_30_women[
+                'Профессиональная переподготовка']
+
+        # перемещаем колонку всего слушателй_temp
+        df_2_1_30_women.insert(0, 'Всего женщин-слушателей', df_2_1_30_women['Всего слушателей_temp'])
+        # Удаляем лишнюю колонку
+        df_2_1_30_women.drop(columns='Всего слушателей_temp', axis=1, inplace=True)
+        df_2_1_30_women = df_2_1_30_women.reset_index()
+        # Заменяем нули пустыми значениями
+        df_2_1_30_women.replace(0.0, np.NaN, inplace=True)
+
+        # Создаем промежуток
+        max_row_30_women = wb['Раздел 2.1 28,29,30'].max_row
+        wb['Раздел 2.1 28,29,30'][
+            f'A{max_row_30_women + 2}'] = 'Всего женщин обученных по  программам для освоения которых требуется ВО'
+        wb['Раздел 2.1 28,29,30'][f'A{max_row_30_women + 2}'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_1_30_women, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.1 28,29,30'].append(r)
+
+        # Устанавливаем размер колонок раздела 2.1 строки 28 и 29
+        wb['Раздел 2.1 28,29,30'].column_dimensions['A'].width = 50
+        wb['Раздел 2.1 28,29,30'].column_dimensions['B'].width = 50
+        wb['Раздел 2.1 28,29,30'].column_dimensions['C'].width = 50
+        wb['Раздел 2.1 28,29,30'].column_dimensions['D'].width = 50
+
+        # Считаем раздел 2.2
+        df_2_2 = df_dpo.copy()
+        df_2_2['for_counting'] = 1
+
+        # Создаем  Раздел 2.2 Общая чис
+
+        df_2_2_all = pd.pivot_table(df_2_2,
+                                    index='Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка',
+                                    columns=['Источник_финансирования_обучения'],
+                                    values=['for_counting'],
+                                    aggfunc='sum')
+
+        # Удаляем мультиколонку для общей таблицы
+        df_2_2_all.columns = df_2_2_all.columns.droplevel()
+        # Исправляем индексы
+        df_2_2_all = df_2_2_all.reset_index()
+
+        # Записываем в раздел 2.2
+        wb['Раздел 2.2 Общая чис'][
+            f'A1'] = 'Общая численность обученных по источнику финансирования по колонкам 4,5,6,7,12,13,14,15'
+        wb['Раздел 2.2 Общая чис'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_2_all, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.2 Общая чис'].append(r)
+
+        # Считаем общую сумму по колонкам 8,9,10
+        df_2_2_all_8910 = pd.pivot_table(df_2_2, index=[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                         columns=[
+                                             'Источник_финансирования_индикаторы_физ_лицо_юр_лицо_бюдж_ассигнования_собственные_средства_ЦОПП'],
+                                         values=['for_counting'],
+                                         aggfunc='sum')
+
+        # Удаляем мультиколонку для общей таблицы
+        df_2_2_all_8910.columns = df_2_2_all_8910.columns.droplevel()
+        # Исправляем индексы
+        df_2_2_all_8910 = df_2_2_all_8910.reset_index()
+
+        # Записываем в раздел 2.2
+        # Создаем промежуток
+        max_row_2_2 = wb['Раздел 2.2 Общая чис'].max_row
+        wb['Раздел 2.2 Общая чис'][f'A{max_row_2_2 + 2}'] = 'Общая численность обученных по колонкам 8,9,10,16,17,18'
+        wb['Раздел 2.2 Общая чис'][f'A{max_row_2_2 + 2}'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_2_all_8910, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.2 Общая чис'].append(r)
+
+        wb['Раздел 2.2 Общая чис'].column_dimensions['A'].width = 50
+        wb['Раздел 2.2 Общая чис'].column_dimensions['B'].width = 50
+        wb['Раздел 2.2 Общая чис'].column_dimensions['C'].width = 50
+        wb['Раздел 2.2 Общая чис'].column_dimensions['D'].width = 50
+        wb['Раздел 2.2 Общая чис'].column_dimensions['E'].width = 50
+        wb['Раздел 2.2 Общая чис'].column_dimensions['F'].width = 50
+
+        # Создаем лист для Раздел 2.2 Бюджеты
+        # Создаем сводную таблицу для колонок 4,5,6,7,12,13,14,15
+        df_2_2_budget = pd.pivot_table(df_2_2, index=[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка',
+            'Категория_слушателя', 'Является_ли_слушатель_руководителем'],
+                                       columns=['Источник_финансирования_обучения'],
+                                       values=['for_counting'],
+                                       aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_2_budget.columns = df_2_2_budget.columns.droplevel()
+
+        df_2_2_budget = df_2_2_budget.reset_index()
+
+        # Записываем в раздел 2.2
+
+        wb['Раздел 2.2 Бюджеты'][f'A1'] = 'Численность обученных по категориям и по колонкам 4,5,6,7,12,13,14,15 '
+        wb['Раздел 2.2 Бюджеты'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_2_budget, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.2 Бюджеты'].append(r)
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['A'].width = 50
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['B'].width = 50
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['C'].width = 50
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['D'].width = 50
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['E'].width = 50
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['F'].width = 50
+        wb['Раздел 2.2 Бюджеты'].column_dimensions['G'].width = 50
+
+        # Раздел 2.2 Источник средств
+
+        # Считаем по колонкам 8,9,10,16,17,18
+        df_2_2_budget_8910 = pd.pivot_table(df_2_2, index=[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка',
+            'Категория_слушателя', 'Является_ли_слушатель_руководителем'],
+                                            columns=[
+                                                'Источник_финансирования_индикаторы_физ_лицо_юр_лицо_бюдж_ассигнования_собственные_средства_ЦОПП'],
+                                            values=['for_counting'],
+                                            aggfunc='sum')
+
+        # Удаляем мультиколонку
+        df_2_2_budget_8910.columns = df_2_2_budget_8910.columns.droplevel()
+
+        df_2_2_budget_8910 = df_2_2_budget_8910.reset_index()
+
+        wb['Раздел 2.2 Источник средств'][f'A1'] = 'Численность обученных по категориям и по колонкам 8,9,10,16,17,18'
+        wb['Раздел 2.2 Источник средств'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_2_budget_8910, index=False, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.2 Источник средств'].append(r)
+
+        # Устанавливаем размер колонок в разделе 2.2
+        wb['Раздел 2.2 Источник средств'].column_dimensions['A'].width = 50
+        wb['Раздел 2.2 Источник средств'].column_dimensions['B'].width = 50
+        wb['Раздел 2.2 Источник средств'].column_dimensions['C'].width = 50
+        wb['Раздел 2.2 Источник средств'].column_dimensions['D'].width = 50
+        wb['Раздел 2.2 Источник средств'].column_dimensions['E'].width = 50
+        wb['Раздел 2.2 Источник средств'].column_dimensions['F'].width = 50
+        wb['Раздел 2.2 Источник средств'].column_dimensions['G'].width = 50
+
+        # Создаем раздел 2.3.1
+        df_2_3_1_base = df_dpo.copy()
+        df_2_3_1_base['for_counting'] = 1
+        df_2_3_1 = df_2_3_1_base[df_2_3_1_base[
+                                     'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'] == 'Повышение квалификации']
+
+        # Создаем лист Раздел 2.3.1 Програм
+        # считаем количество программ
+        # группируем. Так как нам нужны текстовые данные то применяем создаем строку с помощью join
+        quantity_program_on_econom = df_2_3_1.groupby('Наименование_дополнительной_профессиональной_программы').agg(
+            {'Вид_экономической_деятельности_дополнительной_профессиональной_программы': lambda x: ','.join(x)})
+
+        # Применяем к полученной серии функцию разделения по запятой. Предполо
+        quantity_program_on_econom['Вид_экономической_деятельности_дополнительной_профессиональной_программы'] = \
+            quantity_program_on_econom['Вид_экономической_деятельности_дополнительной_профессиональной_программы'].apply(
+                lambda x: x.split(',')[0])
+
+        df_2_3_1_quantity_program = quantity_program_on_econom[
+            'Вид_экономической_деятельности_дополнительной_профессиональной_программы'].value_counts().to_frame()
+
+        # переименовываем индекс и колонку
+        df_2_3_1_quantity_program.index.name = 'Вид экономической деятельности'
+        df_2_3_1_quantity_program.columns = ['Количество программ']
+
+        # Записываем в раздел 2.3.1
+        wb['Раздел 2.3.1 Програм'][
+            f'A1'] = 'Число реализованных программ повышения квалификации по видам экономической деятельности'
+        wb['Раздел 2.3.1 Програм'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_1_quantity_program, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.3.1 Програм'].append(r)
+
+        # Устанавливаем размер колонок в листе 2.3.1 Програм
+        wb['Раздел 2.3.1 Програм'].column_dimensions['A'].width = 70
+
+        # Лист Раздел 2.3.1 Всего
+        # Считаем общую сумму колонка 4.
+
+        df_2_3_1_category_sum_all = pd.pivot_table(df_2_3_1, index=[
+            'Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                                   columns=['Категория_слушателя', 'Является_ли_слушатель_руководителем'],
+                                                   values=['for_counting'],
+                                                   aggfunc='sum')
+
+        df_2_3_1_category_sum_all.fillna(0.0, inplace=True)
+
+        # Последовательно убираем 2 мультииндекса
+        df_2_3_1_category_sum_all.columns = df_2_3_1_category_sum_all.columns.droplevel()
+        df_2_3_1_category_sum_all.columns = df_2_3_1_category_sum_all.columns.droplevel()
+
+        # Заменяем имена колонок
+        df_2_3_1_category_sum_all.columns = range(len(df_2_3_1_category_sum_all.columns))
+
+        # Считаем сумму
+        df_2_3_1_category_sum_all['Всего'] = df_2_3_1_category_sum_all.iloc[:, :].sum(axis=1)
+
+        df_2_3_1_category_sum_all_out = df_2_3_1_category_sum_all['Всего'].to_frame()
+
+        df_2_3_1_category_sum_all_out.columns = ['Всего слушателей,по видам экономической деятельности']
+
+        # Записываем в раздел 2.3.1
+
+        wb['Раздел 2.3.1 Всего'][f'A1'] = 'Численность слушателей обученных по каждому виду экономической деятельности'
+        wb['Раздел 2.3.1 Всего'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_1_category_sum_all_out, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.3.1 Всего'].append(r)
+        # Устанавливаем размер колонок в листе 2.3.1 Всего
+        wb['Раздел 2.3.1 Всего'].column_dimensions['A'].width = 70
+
+        # Раздел 2.3.1 По видам и категориям
+
+        # Считаем суммы по видам и категориям слушателей
+        df_2_3_1_category = pd.pivot_table(df_2_3_1,
+                                           index=[
+                                               'Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                           columns=['Категория_слушателя', 'Является_ли_слушатель_руководителем'],
+                                           values=['for_counting'],
+                                           aggfunc='sum')
+
+        df_2_3_1_category.columns = df_2_3_1_category.columns.droplevel()
+
+        # Записываем в раздел 2.3.1
+
+        wb['2.3.1 По видам и категориям'][
+            f'A1'] = 'Численность КАТЕГОРИЙ слушателей обученных по каждому виду экономической деятельности'
+        wb['2.3.1 По видам и категориям'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_1_category, index=True, header=True):
+            if len(r) != 1:
+                wb['2.3.1 По видам и категориям'].append(r)
+        # Устанавливаем размер колонок в листе 2.3.1 По видам и категориям
+        wb['2.3.1 По видам и категориям'].column_dimensions['A'].width = 70
+
+        # Считаем по уровню образованию
+        # Раздел 2.3.1 По видам и образованию
+        # Создаем список категорий слушателей которых нужно посчитать
+        lst_2_3_1_obraz = ['работник предприятия или организации', 'работник образовательной организации',
+                           'лицо, замещающее государственную должность или должность ГГС'
+            , 'лицо,замещающее муниципальную должность или должность муниципальной службы',
+                           'лицо,уволенное с военной службы',
+                           'незанятое лицо по направлению СЗ', 'безработный по направлению СЗ', 'другое']
+
+        df_2_3_1_obraz_base = df_2_3_1.loc[df_2_1['Категория_слушателя'].isin(lst_2_3_1_obraz)]
+
+        df_2_3_1_obraz = pd.pivot_table(df_2_3_1_obraz_base,
+                                        index=['Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                        columns=['Уровень_образования_ВО_СПО'],
+                                        values=['for_counting'],
+                                        aggfunc='sum')
+
+        # Убираем мультииндекс
+        df_2_3_1_obraz.columns = df_2_3_1_obraz.columns.droplevel()
+
+        # Записываем в раздел 2.3.1
+
+        wb['2.3.1 По видам и образованию'][
+            f'A1'] = 'Численность  слушателей по уровню образования, обученных по каждому виду экономической деятельности'
+        wb['2.3.1 По видам и образованию'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_1_obraz, index=True, header=True):
+            if len(r) != 1:
+                wb['2.3.1 По видам и образованию'].append(r)
+        wb['2.3.1 По видам и образованию'].column_dimensions['A'].width = 70
+
+        # Раздел 2.3.1 По видам и форме обучения
+
+        # Считаем слушателей по форме обучения
+        df_2_3_1_forma_obuch = pd.pivot_table(df_2_3_1, index=[
+            'Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                              columns=['Форма_обучения'],
+                                              values=['for_counting'],
+                                              aggfunc='sum')
+
+        # Убираем мультииндекс
+        df_2_3_1_forma_obuch.columns = df_2_3_1_forma_obuch.columns.droplevel()
+
+        # Записываем в Раздел 2.3.1 По видам и образованию
+
+        wb['2.3.1 По видам и форме обучения'][
+            f'A1'] = 'Численность  слушателей по форме обучения, обученных по каждому виду экономической деятельности'
+        wb['2.3.1 По видам и форме обучения'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_1_forma_obuch, index=True, header=True):
+            if len(r) != 1:
+                wb['2.3.1 По видам и форме обучения'].append(r)
+
+        # Устанавливаем размер колонок в разделе 2.3.1
+        wb['2.3.1 По видам и форме обучения'].column_dimensions['A'].width = 50
+
+        # Создаем раздел 2.3.1
+        df_2_3_2_base = df_dpo.copy()
+        df_2_3_2_base['for_counting'] = 1
+        df_2_3_2 = df_2_3_2_base[df_2_3_2_base[
+                                     'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'] == 'Профессиональная переподготовка']
+
+        # Создаем лист Раздел 2.3.2 Програм
+
+        # считаем количество программ
+        # группируем. Так как нам нужны текстовые данные то применяем создаем строку с помощью join
+        quantity_program_on_econom = df_2_3_2.groupby('Наименование_дополнительной_профессиональной_программы').agg(
+            {'Вид_экономической_деятельности_дополнительной_профессиональной_программы': lambda x: ','.join(x)})
+
+        # Применяем к полученной серии функцию разделения по запятой. Предполо
+        quantity_program_on_econom['Вид_экономической_деятельности_дополнительной_профессиональной_программы'] = \
+            quantity_program_on_econom['Вид_экономической_деятельности_дополнительной_профессиональной_программы'].apply(
+                lambda x: x.split(',')[0])
+
+        df_2_3_2_quantity_program = quantity_program_on_econom[
+            'Вид_экономической_деятельности_дополнительной_профессиональной_программы'].value_counts().to_frame()
+
+        # переименовываем индекс и колонку
+        df_2_3_2_quantity_program.index.name = 'Вид экономической деятельности'
+        df_2_3_2_quantity_program.columns = ['Количество программ']
+
+        # Записываем в раздел 2.3.2
+        wb['Раздел 2.3.2 Програм'][
+            f'A1'] = 'Число реализованных программ профессиональной переподготовки по видам экономической деятельности'
+        wb['Раздел 2.3.2 Програм'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_2_quantity_program, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.3.2 Програм'].append(r)
+        wb['Раздел 2.3.2 Програм'].column_dimensions['A'].width = 50
+
+        # Создаем лист Раздел 2.3.2 Всего
+        # Считаем общую сумму колонка 4
+        df_2_3_2_category_sum_all = pd.pivot_table(df_2_3_2, index=[
+            'Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                                   columns=['Категория_слушателя', 'Является_ли_слушатель_руководителем'],
+                                                   values=['for_counting'],
+                                                   aggfunc='sum')
+
+        df_2_3_2_category_sum_all.fillna(0.0, inplace=True)
+
+        # Последовательно убираем 2 мультииндекса
+        df_2_3_2_category_sum_all.columns = df_2_3_2_category_sum_all.columns.droplevel()
+        df_2_3_2_category_sum_all.columns = df_2_3_2_category_sum_all.columns.droplevel()
+
+        # Заменяем имена колонок
+        df_2_3_2_category_sum_all.columns = range(len(df_2_3_2_category_sum_all.columns))
+
+        # Считаем сумму
+        df_2_3_2_category_sum_all['Всего'] = df_2_3_2_category_sum_all.iloc[:, :].sum(axis=1)
+
+        df_2_3_2_category_sum_all_out = df_2_3_2_category_sum_all['Всего'].to_frame()
+
+        df_2_3_2_category_sum_all_out.columns = ['Всего слушателей,по видам экономической деятельности']
+
+        # Записываем в раздел 2.3.2
+        # Создаем промежуток
+
+        wb['Раздел 2.3.2 Всего'][f'A1'] = 'Численность слушателей обученных по каждому виду экономической деятельности'
+        wb['Раздел 2.3.2 Всего'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_2_category_sum_all_out, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.3.2 Всего'].append(r)
+        wb['Раздел 2.3.2 Всего'].column_dimensions['A'].width = 50
+
+        # Создаем лист Раздел 2.3.2 По видам и категориям
+        # Считаем суммы по категориям
+        df_2_3_2_category = pd.pivot_table(df_2_3_2,
+                                           index=[
+                                               'Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                           columns=['Категория_слушателя', 'Является_ли_слушатель_руководителем'],
+                                           values=['for_counting'],
+                                           aggfunc='sum')
+
+        df_2_3_2_category.columns = df_2_3_2_category.columns.droplevel()
+
+        # Записываем в раздел 2.3.2
+
+        wb['2.3.2 По видам и категориям'][
+            f'A1'] = 'Численность КАТЕГОРИЙ слушателей обученных по каждому виду экономической деятельности'
+        wb['2.3.2 По видам и категориям'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_2_category, index=True, header=True):
+            if len(r) != 1:
+                wb['2.3.2 По видам и категориям'].append(r)
+        wb['2.3.2 По видам и категориям'].column_dimensions['A'].width = 50
+
+        # Создаем лист Раздел 2.3.2 По видам и образованию
+
+        # Создаем список категорий слушателей которых нужно посчитать
+        lst_2_2_obraz = ['работник предприятия или организации', 'работник образовательной организации',
+                         'лицо, замещающее государственную должность или должность ГГС'
+            , 'лицо,замещающее муниципальную должность или должность муниципальной службы',
+                         'лицо,уволенное с военной службы',
+                         'незанятое лицо по направлению СЗ', 'безработный по направлению СЗ', 'другое']
+
+        df_2_3_2_obraz_base = df_2_3_2.loc[df_2_1['Категория_слушателя'].isin(lst_2_2_obraz)]
+
+        df_2_3_2_obraz = pd.pivot_table(df_2_3_2_obraz_base,
+                                        index=['Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                        columns=['Уровень_образования_ВО_СПО'],
+                                        values=['for_counting'],
+                                        aggfunc='sum')
+
+        # Убираем мультииндекс
+        df_2_3_2_obraz.columns = df_2_3_2_obraz.columns.droplevel()
+
+        # Записываем в раздел 2.3.1
+
+        wb['2.3.2 По видам и образованию'][
+            f'A1'] = 'Численность  слушателей по уровню образования, обученных по каждому виду экономической деятельности'
+        wb['2.3.2 По видам и образованию'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_2_obraz, index=True, header=True):
+            if len(r) != 1:
+                wb['2.3.2 По видам и образованию'].append(r)
+        wb['2.3.2 По видам и образованию'].column_dimensions['A'].width = 50
+
+        # Создаем Раздел 2.3.2 По видам и форме обучения
+        # Считаем слушателей по форме обучения
+        df_2_3_2_forma_obuch = pd.pivot_table(df_2_3_2, index=[
+            'Вид_экономической_деятельности_дополнительной_профессиональной_программы'],
+                                              columns=['Форма_обучения'],
+                                              values=['for_counting'],
+                                              aggfunc='sum')
+
+        # Убираем мультииндекс
+        df_2_3_2_forma_obuch.columns = df_2_3_2_forma_obuch.columns.droplevel()
+
+        # Записываем в раздел 2.3.1
+
+        wb['2.3.2 По видам и форме обучения'][
+            f'A1'] = 'Численность  слушателей по форме обучения, обученных по каждому виду экономической деятельности'
+        wb['2.3.2 По видам и форме обучения'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(df_2_3_2_forma_obuch, index=True, header=True):
+            if len(r) != 1:
+                wb['2.3.2 По видам и форме обучения'].append(r)
+
+        # Устанавливаем размер колонок в разделе 2.3.1
+        wb['2.3.2 По видам и форме обучения'].column_dimensions['A'].width = 50
+
+        # Создаем дополнительную числовую колонку где каждое значение это 1, для удобства агрегирования
+        df_2_4 = df_dpo.copy()
+        # Добавляем колонку с 1
+        df_2_4['for_counting'] = 1
+
+        # Считаем общее количество
+        all_counting_age_category = df_2_4.groupby(['Возрастная_категория_1ПК']).agg({'for_counting': 'sum'}).rename(
+            columns={'for_counting': 'Всего слушателей'})
+
+        df_2_4_all = all_counting_age_category.swapaxes(1, 0)
+
+        # Считаем женщин
+        df_2_4_women = df_2_4[df_2_4['Пол_получателя'] == 'Жен'].groupby(['Возрастная_категория_1ПК']).agg(
+            {'for_counting': 'sum'}).rename(columns={'for_counting': 'Из них Женщин'}).swapaxes(1, 0)
+
+        df_2_4_all = pd.concat([df_2_4_all, df_2_4_women], axis=0)
+
+        finish_df2_4 = pd.pivot_table(df_dpo, index=[
+            'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка',
+            'Пол_получателя'],
+                                      columns=['Возрастная_категория_1ПК'],
+                                      values=['ФИО_именительный'],
+                                      aggfunc='count')
+
+        finish_df2_4.columns = finish_df2_4.columns.droplevel()
+        finish_df2_4.index = finish_df2_4.index.droplevel()
+
+        finish_df2_4 = pd.concat([df_2_4_all, finish_df2_4])
+
+        # Переименовываем индекс, чтобы было более понятно
+        finish_df2_4.index.name = 'Наименование показателей'
+        finish_df2_4.index = ['Численность слушателей Всего', 'из них Женщин', 'Повышение квалификации Женщины',
+                              'Повышение квалификации Мужчины',
+                              'Профессиональная переподготовка Женщины', 'Профессиональная переподготовка Мужчины', ]
+
+        wb['Раздел 2.4'][f'A1'] = 'Распределение слушателей по возрасту,полу и программам'
+        wb['Раздел 2.4'][f'A1'].font = font_name_table
+        wb['Раздел 2.4'][f'A2'] = 'В таблице отображаются только те возрастные категории которые ЕСТЬ в исходной таблице!'
+        wb['Раздел 2.4'][f'A2'].font = font_name_table
+
+        # Сохраняем в лист Раздел 2.4
+        for r in dataframe_to_rows(finish_df2_4, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.4'].append(r)
+        wb['Раздел 2.4'].column_dimensions['A'].width = 50
+
+        # раздел 2.5 Инвалиды
+        df_dpo_2_5 = df_dpo.copy()
+        df_dpo_2_5['for_counting'] = 1
+        df_dpo_2_5 = df_dpo_2_5[df_dpo_2_5['Сведения_об_ограничении_возможностей_здоровья'] != 'нет ОВЗ']
+
+        df_2_5_all = df_dpo_2_5.groupby(
+            ['Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка']).agg(
+            {'ФИО_именительный': 'count'}).rename(columns={'ФИО_именительный': 'Всего'}).swapaxes(1, 0)
+
+        finish_df2_5 = pd.pivot_table(df_dpo_2_5,
+                                      index=['Сведения_об_ограничении_возможностей_здоровья'],
+                                      columns=[
+                                          'Дополнительная_профессиональная_программа_повышение_квалификации_профессиональная_переподготовка'],
+                                      values=['for_counting'],
+                                      aggfunc='sum')
+
+        finish_df2_5.columns = finish_df2_5.columns.droplevel(0)
+
+        # Соединяем
+        finish_df2_5 = pd.concat([df_2_5_all, finish_df2_5])
+
+        # заполняем пропуски нулями
+        finish_df2_5.fillna(0, inplace=True)
+
+        # Необходимо как то проверять наличие колонок, ведь не факт что в таблице будет повышение квалификации или проф подготовка
+        # создаем колонку всего
+
+        # Проверяем количество колонок
+        # Заполняем нулями чтобы корректно слаживалось
+        if len(finish_df2_5.columns) == 1:
+            finish_df2_5['Всего слушателей по всем категориям'] = finish_df2_5.iloc[:, 0]
+        elif len(finish_df2_5.columns):
+            finish_df2_5['Всего слушателей по всем категориям'] = finish_df2_5.iloc[:, 0] + finish_df2_5.iloc[:, 1]
+
+        finish_df2_5 = finish_df2_5.astype(float)
+
+        finish_df2_5 = finish_df2_5.replace(0.0, np.NaN)
+
+        wb['Раздел 2.5'][f'A1'] = 'Обучение лиц с ограниченными возможностями и инвалидов'
+        wb['Раздел 2.5'][f'A1'].font = font_name_table
+
+        for r in dataframe_to_rows(finish_df2_5, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.5'].append(r)
+
+        wb['Раздел 2.5'].column_dimensions['A'].width = 50
+
+        # Считаем колонку с женщинами инвалидами
+        df_2_5_women = df_dpo_2_5[df_dpo_2_5['Пол_получателя'] == 'Жен'].groupby(
+            'Сведения_об_ограничении_возможностей_здоровья').agg({'for_counting': 'sum'})
+
+        df_2_5_women.columns = ['Количество женщин']
+
+        sum_woman = df_2_5_women['Количество женщин'].sum()
+
+        if sum_woman == 0:
+            # т.е если женщин инвалидов нет, то создаем датафрейм с пустыми значениями
+            df_2_5_women_all = pd.DataFrame(data=[np.NaN, np.NaN, np.NaN], index=['Всего', 'инвалид', 'Лицо с ОВЗ'],
+                                            columns=['Количество женщин'])
+        else:
+            # в противном случае, считаем общее количество женщин-инвалидов. Создаем маленький датафрейм
+            df_2_5_women_all = pd.DataFrame(data=sum_woman, index=['Всего женщин инвалидов'], columns=['Количество женщин'])
+            # Объединяем столбы с женщинами инвалидами
+            df_2_5_women_all = pd.concat([df_2_5_women_all, df_2_5_women])
+
+        wb['Раздел 2.5'][f'A5'] = 'Женщины инвалиды и ОВЗ'
+        wb['Раздел 2.5'][f'A5'].font = font_name_table
+
+        # Добавляем в раздел 2.5 информацию о женщинах
+        for r in dataframe_to_rows(df_2_5_women_all, index=True, header=True):
+            if len(r) != 1:
+                wb['Раздел 2.5'].append(r)
+
+        # Получаем текущее время для того чтобы использовать в названии
+        t = time.localtime()
+        current_time = time.strftime('%H_%M_%S', t)
+        # Сохраняем итоговый файл
+        wb.save(f'{path_to_end_folder_report}/Часть отчета 1-ПК.xlsx {current_time}.xlsx')
+    except NameError:
+        messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    else:
+        messagebox.showinfo('ЦОПП Бурятия','Создание части отчета 1-ПК\nЗавершено!')
 
 
 def create_report_svod():
@@ -1092,7 +2203,7 @@ if __name__ == '__main__':
                              )
     btn_report_svod.grid(column=0, row=7, padx=10, pady=10)
 
-    btn_report_one_pk = Button(frame_create_report, text='Создать отчет 1-ПК', font=('Arial Bold', 20),
+    btn_report_one_pk = Button(frame_create_report, text='Подсчитать часть данных\nдля отчета 1-ПК', font=('Arial Bold', 15),
                                command=create_report_one_pk
                                )
     btn_report_one_pk.grid(column=0, row=8, padx=10, pady=10)
