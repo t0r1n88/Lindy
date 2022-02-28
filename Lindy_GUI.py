@@ -1499,6 +1499,13 @@ def create_report_one_pk():
     else:
         messagebox.showinfo('ЦОПП Бурятия','Создание части отчета 1-ПК\nЗавершено!')
 
+def create_report_one_po():
+    """
+    Функция для создания отчета 1-ПО
+    :return:
+    """
+    pass
+
 
 def create_report_svod():
     """
@@ -2207,6 +2214,11 @@ if __name__ == '__main__':
                                command=create_report_one_pk
                                )
     btn_report_one_pk.grid(column=0, row=8, padx=10, pady=10)
+
+    btn_report_one_po = Button(frame_create_report, text='Подсчитать часть данных\nдля отчета 1-ПО', font=('Arial Bold', 15),
+                               command=create_report_one_po
+                               )
+    btn_report_one_po.grid(column=0, row=9, padx=10, pady=10)
 
     # размещаем виджеты на вкладке Прочее
     lbl_hello = Label(tab_create_general_table,
