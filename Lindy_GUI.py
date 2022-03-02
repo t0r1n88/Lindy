@@ -1710,6 +1710,11 @@ def create_general_table():
         # Получаем базовые датафреймы
         df_dpo = pd.read_excel(name_file_template_table, sheet_name='ДПО')
         df_po = pd.read_excel(name_file_template_table, sheet_name='ПО')
+        # Очищаем базовые датафреймы на случай  если там есть какие то строки. Необходимо чтобы шаблон был полностью пуст
+        df_dpo = df_dpo.iloc[0:0]
+        df_po = df_po.iloc[0:0]
+
+
         # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
         for dirpath, dirnames, filenames in os.walk(path_to_files_groups):
             for filename in filenames:
@@ -1723,6 +1728,9 @@ def create_general_table():
                     #
                     df_dpo = pd.concat([df_dpo, temp_dpo], ignore_index=True)
                     df_po = pd.concat([df_po, temp_po], ignore_index=True)
+
+        # Проверяем размер датафреймов, чтобы не обрабатывать пустые
+
 
         # Добавляем 2 колонки с характеристиками возраста
         df_dpo['Текущий_возраст'] = df_dpo['Дата_рождения_получателя'].apply(calculate_age)
