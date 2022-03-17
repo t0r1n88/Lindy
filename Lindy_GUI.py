@@ -16,8 +16,8 @@ import datetime
 from datetime import date
 from openpyxl.chart.label import DataLabelList
 from openpyxl.chart import BarChart, Reference, PieChart, PieChart3D, Series
-import warnings
 pd.options.display.max_colwidth = 100
+import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
 
@@ -172,6 +172,11 @@ def create_initials(fio):
     initials_lastname = ''
 
     # Сплитим по пробелу
+    if type(fio) == float:
+        print(fio)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность написания ФИО в столбце ФИО_именительный')
+        quit()
+
     lst_fio = fio.split()
     # Если ФИО стандартное
     if len(lst_fio) == 3:
