@@ -19,7 +19,7 @@ from openpyxl.chart import BarChart, Reference, PieChart, PieChart3D, Series
 pd.options.display.max_colwidth = 100
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
-
+import re
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and f  or PyInstaller """
@@ -157,6 +157,89 @@ def convert_date(cell):
     except TypeError:
         print(cell)
         messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
+        quit()
+
+def extract_date_begin_course(cell:str):
+    """
+    Функция для извлечения даты начала курса
+    """
+
+    try:
+        # Находим обе даты
+        match = re.findall(r'\d\d.\d\d.\d\d\d\d', cell)
+        # date_course = datetime.datetime.strptime(match[0], '%d.%m.%Y')
+        # string_date = datetime.datetime.strftime(date_course, '%d.%m.%Y')
+        return match[0]
+    except TypeError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+    except IndexError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+
+
+
+def extract_date_end_course(cell:str):
+    """
+    Функция для извлечения даты окончания курса
+    """
+    try:
+        # Находим обе даты
+        match = re.findall(r'\d\d.\d\d.\d\d\d\d', cell)
+        # Конвертируем строку
+        # date_course = datetime.datetime.strptime(match[1], '%d.%m.%Y')
+        # string_date = datetime.datetime.strftime(date_course, '%d.%m.%Y')
+        return match[1]
+    except TypeError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+    except IndexError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+
+def extract_month_begin_course(cell:str):
+    """
+    Функция для извлечения месяца начала курса в формате от 1 до 12
+    """
+    try:
+        # Находим оба месяца выделив месяц круглыми скобками
+        match = re.findall(r'\d\d.(\d\d).\d\d\d\d', cell)
+        # Конвертируем строку
+        # date_course = datetime.datetime.strptime(match[1], '%d.%m.%Y')
+        # string_date = datetime.datetime.strftime(date_course, '%d.%m.%Y')
+        return int(match[0])
+    except TypeError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+    except IndexError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+
+
+def extract_month_end_course(cell:str):
+    """
+    Функция для извлечения месяца окончания курса в формате от 1 до 12
+    """
+    try:
+        # Находим обе даты
+        match = re.findall(r'\d\d.(\d\d).\d\d\d\d', cell)
+        # Конвертируем строку
+        # date_course = datetime.datetime.strptime(match[1], '%d.%m.%Y')
+        # string_date = datetime.datetime.strftime(date_course, '%d.%m.%Y')
+        return int(match[1])
+    except TypeError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
+        quit()
+    except IndexError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячейки \nПериод_обучения_в_формате_с_дата_начала_по_дата_окончания!!!')
         quit()
 
 
@@ -2773,9 +2856,19 @@ def create_general_table():
         # Добавляем 2 колонки с возрастом и категорией для каждого базового датафрейма.Чтобы конкатенация прошла успешно
         df_dpo['Текущий_возраст'] = np.nan
         df_dpo['Возрастная_категория_1ПК'] = np.nan
+        df_dpo['Дата_начала_курса'] = np.nan
+        df_dpo['Дата_окончания_курса'] = np.nan
+        df_dpo['Месяц_начала_курса'] = np.nan
+        df_dpo['Месяц_окончания_курса'] = np.nan
+
 
         df_po['Текущий_возраст'] = np.nan
         df_po['Возрастная_категория_1ПО'] = np.nan
+        df_po['Дата_начала_курса'] = np.nan
+        df_po['Дата_окончания_курса'] = np.nan
+        df_po['Месяц_начала_курса'] = np.nan
+        df_po['Месяц_окончания_курса'] = np.nan
+
 
 
         # Перебираем файлы собирая данные в промежуточные датафреймы и добавляя их в базовые
@@ -2804,7 +2897,12 @@ def create_general_table():
                                                                           '40-44', '45-49', '50-54', '55-59', '60-64',
                                                                           '65 и более',
                                                                           'Возраст  больше 101'])
-                    #
+                    # Добавляем 4 колонки с характеристиками дат курсов
+                    temp_dpo['Дата_начала_курса'] = temp_dpo['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_date_begin_course)
+                    temp_dpo['Дата_окончания_курса'] = temp_dpo['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_date_end_course)
+                    temp_dpo['Месяц_начала_курса'] = temp_dpo['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_month_begin_course)
+                    temp_dpo['Месяц_окончания_курса'] = temp_dpo['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_month_end_course)
+                    # Обрабатываем датафрейм с ПО
                     temp_po['Текущий_возраст'] = temp_po['Дата_рождения_получателя'].apply(calculate_age)
                     temp_po['Возрастная_категория_1ПО'] = pd.cut(temp_po['Текущий_возраст'],
                                                                  [0, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
@@ -2822,6 +2920,13 @@ def create_general_table():
                                                                          '55-59 лет',
                                                                          '60-64 лет',
                                                                          '65 лет и старше'])
+                    # Добавляем 4 колонки с характеристиками дат курсов
+                    temp_po['Дата_начала_курса'] = temp_po['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_date_begin_course)
+                    temp_po['Дата_окончания_курса'] = temp_po['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_date_end_course)
+                    temp_po['Месяц_начала_курса'] = temp_po['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_month_begin_course)
+                    temp_po['Месяц_окончания_курса'] = temp_po['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_month_end_course)
+
+
                     # Конвертируем  столбцы с датами в краткий формат
                     temp_dpo['Дата_выдачи_документа'] = temp_dpo['Дата_выдачи_документа'].apply(convert_date)
                     temp_dpo['Дата_рождения_получателя'] = temp_dpo['Дата_рождения_получателя'].apply(convert_date)
@@ -2830,6 +2935,8 @@ def create_general_table():
                     temp_po['Дата_выдачи_документа'] = temp_po['Дата_выдачи_документа'].apply(convert_date)
                     temp_po['Дата_рождения_получателя'] = temp_po['Дата_рождения_получателя'].apply(convert_date)
                     temp_po['Дата_выдачи_паспорта'] = temp_po['Дата_выдачи_паспорта'].apply(convert_date)
+
+
                     # Добавляем промежуточные датафреймы в исходные
                     #
 
@@ -2854,6 +2961,11 @@ def create_general_table():
 
         wb['ДПО']['BO1'] = 'Текущий_возраст'
         wb['ДПО']['BP1'] = 'Возрастная_категория_1ПК'
+        wb['ДПО']['BQ1'] = 'Дата_начала_курса'
+        wb['ДПО']['BR1'] = 'Дата_окончания_курса'
+        wb['ДПО']['BS1'] = 'Месяц_начала_курса'
+        wb['ДПО']['BT1'] = 'Месяц_окончания_курса'
+
 
         # Записываем лист ПО
         for ir in range(0, len(df_po)):
@@ -2861,6 +2973,11 @@ def create_general_table():
                 wb['ПО'].cell(2 + ir, 1 + ic).value = df_po.iloc[ir][ic]
         wb['ПО']['BJ1'] = 'Текущий_возраст'
         wb['ПО']['BK1'] = 'Возрастная_категория_1ПО'
+        wb['ПО']['BL1'] = 'Дата_начала_курса'
+        wb['ПО']['BM1'] = 'Дата_окончания_курса'
+        wb['ПО']['BN1'] = 'Месяц_начала_курса'
+        wb['ПО']['BO1'] = 'Месяц_окончания_курса'
+
 
         # Получаем текущее время для того чтобы использовать в названии
 
