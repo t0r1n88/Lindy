@@ -151,13 +151,17 @@ def convert_date(cell):
     Функция для конвертации даты в формате 1957-05-10 в формат 10.05.1957(строковый)
     """
 
-    try:
-        string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
-        return string_date
-    except TypeError:
-        print(cell)
-        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
-        quit()
+    string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
+    return string_date
+
+
+    # try:
+    #     string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
+    #     return string_date
+    # except TypeError:
+    #     print(cell)
+    #     messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
+    #     quit()
 
 def extract_date_begin_course(cell:str):
     """
@@ -297,9 +301,14 @@ def generate_docs_dpo():
     :return:
     """
     try:
+        # Получаем название для создаваемых документов
+        name_doc = entry_name_file.get()
         # Считываем данные с листа ДПО в указанной таблице
         df = pd.read_excel(name_file_data_doc, sheet_name='ДПО')
         # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
+        df['Дата_рождения_получателя'] = pd.to_datetime(df['Дата_рождения_получателя'],dayfirst=True)
+        df['Дата_выдачи_паспорта'] = pd.to_datetime(df['Дата_выдачи_паспорта'],dayfirst=True)
+
 
         df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
 
@@ -324,8 +333,10 @@ def generate_docs_dpo():
                 # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
 
                 doc.render(context)
+                t = time.localtime()
+                current_time = time.strftime('%H_%M_%S', t)
 
-                doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
+                doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
             messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
         else:
@@ -341,9 +352,12 @@ def generate_docs_dpo():
             doc = DocxTemplate(name_file_template_doc)
             # Создаем документ
             doc.render(context)
+
+            t = time.localtime()
+            current_time = time.strftime('%H_%M_%S', t)
             # сохраняем документ
             doc.save(
-                f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_дополнительной_профессиональной_программы"]}.docx')
+                f'{path_to_end_folder_doc}/{name_doc} {context["Наименование_дополнительной_профессиональной_программы"]} от {current_time}.docx')
             messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
@@ -355,9 +369,14 @@ def generate_docs_po():
     :return:
     """
     try:
+        # Получаем название для создаваемых документов
+        name_doc = entry_name_file.get()
         # Считываем данные с листа ПО в указанной таблице
         df = pd.read_excel(name_file_data_doc, sheet_name='ПО')
         # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
+        df['Дата_рождения_получателя'] = pd.to_datetime(df['Дата_рождения_получателя'],dayfirst=True)
+        df['Дата_выдачи_паспорта'] = pd.to_datetime(df['Дата_выдачи_паспорта'],dayfirst=True)
+
         df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
         df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
         # Добавляем столбец инициалы
@@ -381,11 +400,15 @@ def generate_docs_po():
                     # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
 
                     doc.render(context)
+                    t = time.localtime()
+                    current_time = time.strftime('%H_%M_%S', t)
 
-                    doc.save(f'{path_to_end_folder_doc}/{row["ФИО_именительный"]}.docx')
+                    doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия', 'Колонка с ФИО должна называться ФИО_именительный')
                 quit()
+            except IndexError:
+                messagebox.showerror('ЦОПП Бурятия', 'Соотв ')
             except:
                 messagebox.showerror('ЦОПП Бурятия',
                                      'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
@@ -407,9 +430,12 @@ def generate_docs_po():
                 doc = DocxTemplate(name_file_template_doc)
                 # Создаем документ
                 doc.render(context)
+                # Получаем текущее время
+                t = time.localtime()
+                current_time = time.strftime('%H_%M_%S', t)
                 # сохраняем документ
                 doc.save(
-                    f'{path_to_end_folder_doc}/Документ по группе {context["Наименование_программы_профессионального_обучения"]}.docx')
+                    f'{path_to_end_folder_doc}/{name_doc} {context["Наименование_программы_профессионального_обучения"]} от {current_time}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
                 quit()
@@ -434,6 +460,8 @@ def generate_docs_other():
     :return:
     """
     try:
+        # Получаем название для создаваемых документов
+        name_doc = entry_name_file.get()
         # Считываем данные
         df = pd.read_excel(name_file_data_doc)
 
@@ -451,16 +479,18 @@ def generate_docs_other():
                 context = row
                 count += 1
                 # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+                t = time.localtime()
+                current_time = time.strftime('%H_%M_%S', t)
 
                 try:
                     if 'ФИО' in row:
                         doc.render(context)
 
-                        doc.save(f'{path_to_end_folder_doc}/{row["ФИО"]}.docx')
+                        doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО"]} от {current_time}.docx')
                     else:
                         doc.render(context)
 
-                        doc.save(f'{path_to_end_folder_doc}/{count}.docx')
+                        doc.save(f'{path_to_end_folder_doc}/{name_doc} {count} от {current_time}.docx')
 
 
                 except:
@@ -479,7 +509,7 @@ def generate_docs_other():
             t = time.localtime()
             current_time = time.strftime('%H_%M_%S', t)
             doc.save(
-                f'{path_to_end_folder_doc}/Документ {current_time}.docx')
+                f'{path_to_end_folder_doc}/{name_doc} {current_time}.docx')
         messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
@@ -3369,33 +3399,45 @@ if __name__ == '__main__':
                           command=select_file_data_doc
                           )
     btn_data_doc.grid(column=0, row=4, padx=10, pady=10)
+
+    # Поле для ввода названия генериуемых документов
+    # Определяем текстовую переменную
+    entry_name_file = StringVar()
+    # Описание поля
+    label_name_column_name_file = Label(frame_data_for_doc, text='3) Введите название создаваемых документов\n'
+                                                                 'например Договор,Справка,Ведомость  и т.п.')
+    label_name_column_name_file.grid(column=0, row=5, padx=10, pady=10)
+    # поле ввода
+    type_file_column_entry = Entry(frame_data_for_doc, textvariable=entry_name_file, width=30)
+    type_file_column_entry.grid(column=0, row=6, padx=5, pady=5, ipadx=30, ipady=15)
+
     #
     # Создаем кнопку для выбора папки куда будут генерироваться файлы
 
-    btn_choose_end_folder_doc = Button(frame_data_for_doc, text='3) Выберите конечную папку', font=('Arial Bold', 20),
+    btn_choose_end_folder_doc = Button(frame_data_for_doc, text='4) Выберите конечную папку', font=('Arial Bold', 20),
                                        command=select_end_folder_doc
                                        )
-    btn_choose_end_folder_doc.grid(column=0, row=5, padx=10, pady=10)
+    btn_choose_end_folder_doc.grid(column=0, row=7, padx=10, pady=10)
     #
     # Создаем кнопку для запуска функции генерации файлов ДПО
 
     btn_create_files_dpo = Button(tab_create_doc, text='Создать документы ДПО', font=('Arial Bold', 20),
                                   command=generate_docs_dpo
                                   )
-    btn_create_files_dpo.grid(column=0, row=6, padx=10, pady=10)
+    btn_create_files_dpo.grid(column=0, row=8, padx=10, pady=10)
 
     # Создаем кнопку для запуска функции генерации файлов ПО
     btn_create_files_po = Button(tab_create_doc, text='Создать документы ПО', font=('Arial Bold', 20),
                                  command=generate_docs_po
                                  )
-    btn_create_files_po.grid(column=0, row=7, padx=10, pady=10)
+    btn_create_files_po.grid(column=0, row=9, padx=10, pady=10)
 
     # Создаем кнопку для создания документов из таблиц с произвольной структурой
     btn_create_files_other = Button(tab_create_doc, text='Создать документы\n из произвольной таблицы',
                                     font=('Arial Bold', 20),
                                     command=generate_docs_other
                                     )
-    btn_create_files_other.grid(column=0, row=8, padx=10, pady=10)
+    btn_create_files_other.grid(column=0, row=10, padx=10, pady=10)
 
     # Добавляем виджеты на вкладку создания отчетов
     lbl_hello = Label(tab_create_report,
