@@ -142,9 +142,17 @@ def calculate_age(born):
     try:
         today = date.today()
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+    except TypeError:
+        print(born)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
+        quit()
+    except ValueError:
+        print(born)
+        messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
+        quit()
     except:
         print(born)
-        messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата рождения слушателя\nПроверьте файл!')
+        messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата \nПроверьте файл!')
         quit()
 
 
@@ -153,17 +161,17 @@ def convert_date(cell):
     Функция для конвертации даты в формате 1957-05-10 в формат 10.05.1957(строковый)
     """
 
-    string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
-    return string_date
-
-
-    # try:
-    #     string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
-    #     return string_date
-    # except TypeError:
-    #     print(cell)
-    #     messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
-    #     quit()
+    try:
+        string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
+        return string_date
+    except TypeError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
+        quit()
+    except ValueError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
+        quit()
 
 def extract_date_begin_course(cell:str):
     """
