@@ -1,30 +1,17 @@
 import tkinter
 import numpy as np
 import pandas as pd
-pd.options.mode.chained_assignment = None  # default='warn'
 import os
 from docxtpl import DocxTemplate
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
 from tkinter import ttk
-import openpyxl
-from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl.styles import Font
-from openpyxl.styles import Alignment
-from openpyxl.styles import Color, PatternFill, Font, Border
-from openpyxl.styles import colors
 import time
-import datetime
-from datetime import date
-from openpyxl.chart.label import DataLabelList
-from openpyxl.chart import BarChart, Reference, PieChart, PieChart3D, Series
-
-pd.options.display.max_colwidth = 100
+pd.options.mode.chained_assignment = None  # default='warn'
 import warnings
-
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
-import re
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and f  or PyInstaller """
@@ -33,8 +20,6 @@ def resource_path(relative_path):
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
 def select_file_template_doc():
     """
     Функция для выбора файла шаблона
@@ -107,3 +92,35 @@ t = time.localtime()
 current_time = time.strftime('%H_%M_%S', t)
 doc.save(
     f'{path_to_end_folder_doc}/Программа повышения квалификации {name_program} {current_time}.docx')
+
+if __name__ == '__main__':
+    window = Tk()
+    window.title('ЦОПП Бурятия')
+    window.geometry('700x950')
+    window.resizable(False, False)
+
+
+
+    # Создаем объект вкладок
+
+    tab_control = ttk.Notebook(window)
+
+    # Создаем вкладку генерации образовательных программ
+    tab_create_educ_program = ttk.Frame(tab_control)
+    tab_control.add(tab_create_educ_program, text='Создание образовательной программы')
+    tab_control.pack(expand=1, fill='both')
+
+    # Создаем метку для описания назначения программы
+    lbl_hello = Label(tab_create_educ_program,
+                      text='Центр опережающей профессиональной подготовки Республики Бурятия\nСоздание образовательной программы')
+    lbl_hello.grid(column=0, row=0, padx=10, pady=25)
+
+    # # Картинка
+    # path_to_img = resource_path('logo.png')
+    # img = PhotoImage(file=path_to_img)
+    # Label(tab_create_educ_program,
+    #       image=img
+    #       ).grid(column=1, row=0, padx=10, pady=25)
+
+
+    window.mainloop()
