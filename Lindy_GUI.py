@@ -328,12 +328,10 @@ def generate_docs_dpo():
         df['Дата_выдачи_паспорта'] = pd.to_datetime(df['Дата_выдачи_паспорта'],dayfirst=True,errors='coerce')
         # Конвертируем
 
+        df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
 
-
-        # df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
-        #
-        # df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
-        # Добавляем столбец инициалы
+        df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
+        #Добавляем столбец инициалы
         df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
 
         # Добавляем столбцы дата начала и дата окончания обучения
@@ -372,12 +370,14 @@ def generate_docs_dpo():
             doc = DocxTemplate(name_file_template_doc)
             # Создаем документ
             doc.render(context)
-
             t = time.localtime()
             current_time = time.strftime('%H_%M_%S', t)
             # сохраняем документ
+            # очищаем название под которым будем сохранять документ от кавычек и двоеточий
+            name_file_dpo = context["Наименование_дополнительной_профессиональной_программы"].replace(':','').replace('"','').replace("'",'')
+
             doc.save(
-                f'{path_to_end_folder_doc}/{name_doc} {context["Наименование_дополнительной_профессиональной_программы"]} от {current_time}.docx')
+                f'{path_to_end_folder_doc}/{name_doc} {name_file_dpo} от {current_time}.docx')
             messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
@@ -460,8 +460,11 @@ def generate_docs_po():
                 t = time.localtime()
                 current_time = time.strftime('%H_%M_%S', t)
                 # сохраняем документ
+                # очищаем название под которым будем сохранять документ от кавычек и двоеточий
+                name_file_po = context["Наименование_программы_профессионального_обучения"].replace(':','').replace('"', '').replace("'",'')
+
                 doc.save(
-                    f'{path_to_end_folder_doc}/{name_doc} {context["Наименование_программы_профессионального_обучения"]} от {current_time}.docx')
+                    f'{path_to_end_folder_doc}/{name_doc} {name_file_po} от {current_time}.docx')
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия,Колонка с ФИО должна называться ФИО_именительный')
                 quit()
@@ -489,7 +492,11 @@ def generate_docs_other():
         # Получаем название для создаваемых документов
         name_doc = entry_name_file.get()
         # Считываем данные
-        df = pd.read_excel(name_file_data_doc)
+        df = pd.read_excel(name_file_data_doc,dtype=str)
+        # # Обрабатываем колонки с датами, чтобы они отображались корректно
+        # for column in df.columns:
+        #     if df[column].dtype == 'datetime64[ns]':
+        #         df[column] = df[column].apply(convert_date)
 
         # Конвертируем датафрейм в список словарей
         data = df.to_dict('records')
@@ -3036,12 +3043,12 @@ def create_general_table():
         for ir in range(0, len(df_po)):
             for ic in range(0, len(df_po.iloc[ir])):
                 wb['ПО'].cell(2 + ir, 1 + ic).value = df_po.iloc[ir][ic]
-        wb['ПО']['BJ1'] = 'Текущий_возраст'
-        wb['ПО']['BK1'] = 'Возрастная_категория_1ПО'
-        wb['ПО']['BL1'] = 'Дата_начала_курса'
-        wb['ПО']['BM1'] = 'Дата_окончания_курса'
-        wb['ПО']['BN1'] = 'Месяц_начала_курса'
-        wb['ПО']['BO1'] = 'Месяц_окончания_курса'
+        wb['ПО']['BN1'] = 'Текущий_возраст'
+        wb['ПО']['BO1'] = 'Возрастная_категория_1ПО'
+        wb['ПО']['BP1'] = 'Дата_начала_курса'
+        wb['ПО']['BQ1'] = 'Дата_окончания_курса'
+        wb['ПО']['BR1'] = 'Месяц_начала_курса'
+        wb['ПО']['BS1'] = 'Месяц_окончания_курса'
 
 
         # Получаем текущее время для того чтобы использовать в названии
@@ -3514,8 +3521,7 @@ if __name__ == '__main__':
     window.geometry('700x950')
     window.resizable(False, False)
 
-    # path_to_icon = resource_path('favicon.ico')
-    # window.iconbitmap(path_to_icon)
+
 
     # Создаем объект вкладок
 
