@@ -2,7 +2,10 @@ import tkinter
 import numpy as np
 import pandas as pd
 import os
+from dateutil.parser import ParserError
 from docxtpl import DocxTemplate
+from docxcompose.composer import Composer
+from docx import Document
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
@@ -22,6 +25,9 @@ pd.options.display.max_colwidth = 100
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 import re
+import tempfile
+
+
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and f  or PyInstaller """
@@ -155,6 +161,42 @@ def calculate_age(born):
         messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата \nПроверьте файл!')
         quit()
 
+def check_date_columns(i, value):
+    """
+    Функция для проверки типа колонки. Необходимо найти колонки с датой
+    :param i:
+    :param value:
+    :return:
+    """
+    #  Да да это просто
+    if '00:00:00' in str(value):
+        try:
+            itog = pd.to_datetime(str(value),infer_datetime_format=True)
+
+        except ParserError:
+            pass
+        except ValueError:
+            pass
+        except TypeError:
+            pass
+        else:
+            return i
+
+def create_doc_convert_date(cell):
+    """
+    Функция для конвертации даты при создании документов
+    :param cell:
+    :return:
+    """
+    try:
+        string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
+        return string_date
+    except ValueError:
+        return ''
+    except TypeError:
+        print(cell)
+        messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
+        quit()
 
 def convert_date(cell):
     """
@@ -312,6 +354,30 @@ def create_initials(fio):
                                              'Фамилии,имена,отчества состоящие из нескольких слов пишите через дефис!')
         quit()
 
+def combine_all_docx(filename_master, files_lst,name_doc):
+    """
+    Функция для объединения файлов Word взято отсюда
+    https://stackoverflow.com/questions/24872527/combine-word-document-using-python-docx
+    :param filename_master: базовый файл
+    :param files_list: список с созданными файлами
+    :param name_doc :желаемое название файла
+    :return: итоговый файл
+    """
+    #Получаем текущее время
+    t = time.localtime()
+    current_time = time.strftime('%H_%M_%S', t)
+
+    number_of_sections = len(files_lst)
+    # Открываем и обрабатываем базовый файл
+    master = Document(filename_master)
+    composer = Composer(master)
+    # Перебираем и добавляем файлы к базовому
+    for i in range(0, number_of_sections):
+        doc_temp = Document(files_lst[i])
+        composer.append(doc_temp)
+    # Сохраняем файл
+    composer.save(f"{path_to_end_folder_doc}/{name_doc} Объединеный файл от {current_time}.docx")
+
 
 def generate_docs_dpo():
     """
@@ -335,6 +401,8 @@ def generate_docs_dpo():
         df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
 
         # Добавляем столбцы дата начала и дата окончания обучения
+
+
         df['Дата_начала_обучения'] = df['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_date_begin_course)
         df['Дата_окончания_обучения'] = df['Период_обучения_в_формате_с_дата_начала_по_дата_окончания'].apply(extract_date_end_course)
 
@@ -343,19 +411,43 @@ def generate_docs_dpo():
 
         # Создаем переменную для типа создаваемого документа
         status_rb_type_doc = group_rb_type_doc.get()
+        # Создаем переменную для получения состояния чекбокса объединения файлов.
+        mode_combine = mode_combine_value.get()
         # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
+
         if status_rb_type_doc == 0:
-            for row in data:
-                doc = DocxTemplate(name_file_template_doc)
-                context = row
-                # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+            if mode_combine == 'No':
+                # Создаем отдельные файлы
+                for row in data:
+                    doc = DocxTemplate(name_file_template_doc)
+                    context = row
+                    # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
 
-                doc.render(context)
-                t = time.localtime()
-                current_time = time.strftime('%H_%M_%S', t)
+                    doc.render(context)
+                    t = time.localtime()
+                    current_time = time.strftime('%H_%M_%S', t)
 
-                doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
-            messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+                    doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
+                messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+            else:
+                # Список с созданными файлами
+                files_lst = []
+                # Создаем временную папку
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    print('created temporary directory', tmpdirname)
+                    # Создаем и сохраняем во временную папку созданные документы Word
+                    for row in data:
+                        doc = DocxTemplate(name_file_template_doc)
+                        context = row
+                        doc.render(context)
+                        # Сохраняем файл
+                        doc.save(f'{tmpdirname}/{row["ФИО_именительный"]}.docx')
+                        # Добавляем путь к файлу в список
+                        files_lst.append(f'{tmpdirname}/{row["ФИО_именительный"]}.docx')
+                    # Получаем базовый файл
+                    main_doc = files_lst.pop(0)
+                    # Запускаем функцию
+                    combine_all_docx(main_doc, files_lst,name_doc)
 
         else:
 
@@ -378,9 +470,11 @@ def generate_docs_dpo():
 
             doc.save(
                 f'{path_to_end_folder_doc}/{name_doc} {name_file_dpo} от {current_time}.docx')
-            messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    else:
+        messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
 
 def generate_docs_po():
@@ -415,22 +509,48 @@ def generate_docs_po():
 
         # Конвертируем датафрейм в список словарей
         data = df.to_dict('records')
-
+        # Создаем переменную для получения состояния чекбокса объединения файлов.
+        mode_combine = mode_combine_value.get()
         # Создаем переменную для типа создаваемого документа
         status_rb_type_doc = group_rb_type_doc.get()
         # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
         if status_rb_type_doc == 0:
+
             try:
-                for row in data:
-                    doc = DocxTemplate(name_file_template_doc)
-                    context = row
-                    # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+                if mode_combine == 'No':
+                    # Создаем отдельные файлы
+                    for row in data:
+                        doc = DocxTemplate(name_file_template_doc)
+                        context = row
+                        # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
 
-                    doc.render(context)
-                    t = time.localtime()
-                    current_time = time.strftime('%H_%M_%S', t)
+                        doc.render(context)
+                        t = time.localtime()
+                        current_time = time.strftime('%H_%M_%S', t)
 
-                    doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
+                        doc.save(
+                            f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
+                    messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+                else:
+                    # Список с созданными файлами
+                    files_lst = []
+                    # Создаем временную папку
+                    with tempfile.TemporaryDirectory() as tmpdirname:
+                        print('created temporary directory', tmpdirname)
+                        # Создаем и сохраняем во временную папку созданные документы Word
+                        for row in data:
+                            doc = DocxTemplate(name_file_template_doc)
+                            context = row
+                            doc.render(context)
+                            # Сохраняем файл
+                            doc.save(f'{tmpdirname}/{row["ФИО_именительный"]}.docx')
+                            # Добавляем путь к файлу в список
+                            files_lst.append(f'{tmpdirname}/{row["ФИО_именительный"]}.docx')
+                        # Получаем базовый файл
+                        main_doc = files_lst.pop(0)
+                        # Запускаем функцию
+                        combine_all_docx(main_doc, files_lst,name_doc)
+
             except KeyError:
                 messagebox.showerror('ЦОПП Бурятия', 'Колонка с ФИО должна называться ФИО_именительный')
                 quit()
@@ -494,42 +614,78 @@ def generate_docs_other():
         # Считываем данные
         df = pd.read_excel(name_file_data_doc,dtype=str)
         # # Обрабатываем колонки с датами, чтобы они отображались корректно
-        # for column in df.columns:
-        #     if df[column].dtype == 'datetime64[ns]':
-        #         df[column] = df[column].apply(convert_date)
+        # получаем первую строку датафрейма
+        first_row = df.iloc[0, :]
+        lst_first_row = list(first_row)
+        lst_date_columns = []
+        # Перебираем
+        for idx, value in enumerate(lst_first_row):
+            result = check_date_columns(idx, value)
+            if result:
+                lst_date_columns.append(result)
+            else:
+                continue
+        # Конвертируем в пригодный строковый формат
+        for i in lst_date_columns:
+            df.iloc[:, i] = pd.to_datetime(df.iloc[:, i],errors='coerce',dayfirst=True)
+            df.iloc[:, i] = df.iloc[:, i].apply(create_doc_convert_date)
+
 
         # Конвертируем датафрейм в список словарей
         data = df.to_dict('records')
         # Создаем счетчик для названий файлов в случае если нет колонки ФИО
         count = 0
+
+        # Создаем переменную для получения состояния чекбокса объединения файлов.
+        mode_combine = mode_combine_value.get()
         # Создаем переменную для типа создаваемого документа
         status_rb_type_doc = group_rb_type_doc.get()
         # если статус == 0 то создаем индивидуальные приказы по количеству строк.30 строк-30 документов
         if status_rb_type_doc == 0:
-            # Создаем в цикле документы
-            for row in data:
-                doc = DocxTemplate(name_file_template_doc)
-                context = row
-                count += 1
-                # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
-                t = time.localtime()
-                current_time = time.strftime('%H_%M_%S', t)
+            if mode_combine == 'No':
+                # Создаем в цикле документы
+                for row in data:
+                    doc = DocxTemplate(name_file_template_doc)
+                    context = row
+                    count += 1
 
-                try:
-                    if 'ФИО' in row:
+                    t = time.localtime()
+                    current_time = time.strftime('%H_%M_%S', t)
+                    try:
+                        if 'ФИО' in row:
+                            doc.render(context)
+
+                            doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО"]} от {current_time}.docx')
+                        else:
+                            doc.render(context)
+
+                            doc.save(f'{path_to_end_folder_doc}/{name_doc} {count} от {current_time}.docx')
+                    except:
+                        messagebox.showerror('ЦОПП Бурятия',
+                                             'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
+                        exit()
+            else:
+                # Список с созданными файлами
+                files_lst = []
+                # Создаем временную папку
+                with tempfile.TemporaryDirectory() as tmpdirname:
+                    print('created temporary directory', tmpdirname)
+                    # счетчик
+                    temp_count= 0
+                    # Создаем и сохраняем во временную папку созданные документы Word
+                    for row in data:
+                        doc = DocxTemplate(name_file_template_doc)
+                        context = row
                         doc.render(context)
-
-                        doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО"]} от {current_time}.docx')
-                    else:
-                        doc.render(context)
-
-                        doc.save(f'{path_to_end_folder_doc}/{name_doc} {count} от {current_time}.docx')
-
-
-                except:
-                    messagebox.showerror('ЦОПП Бурятия',
-                                         'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
-                    exit()
+                        # Сохраняем файл
+                        doc.save(f'{tmpdirname}/{temp_count}.docx')
+                        # Добавляем путь к файлу в список
+                        files_lst.append(f'{tmpdirname}/{temp_count}.docx')
+                        temp_count +=1
+                    # Получаем базовый файл
+                    main_doc = files_lst.pop(0)
+                    # Запускаем функцию
+                    combine_all_docx(main_doc, files_lst,name_doc)
         else:
             context = data[0]
             # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
@@ -546,6 +702,8 @@ def generate_docs_other():
         messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    else:
+        messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
 
 
 # Функции для создания отчетов
@@ -3604,26 +3762,44 @@ if __name__ == '__main__':
                                        command=select_end_folder_doc
                                        )
     btn_choose_end_folder_doc.grid(column=0, row=7, padx=10, pady=10)
+
+    # Создаем переменную для хранения результа переключения чекбокса
+    mode_combine_value = StringVar()
+
+    # Устанавливаем значение по умолчанию для этой переменной. По умолчанию будет вестись подсчет числовых данных
+    mode_combine_value.set('No')
+    # Создаем чекбокс для выбора режима подсчета
+
+    chbox_mode_calculate = Checkbutton(frame_data_for_doc,
+                                       text='Поставьте галочку, если вам нужно чтобы все файлы были объединены в один',
+                                       variable=mode_combine_value,
+                                       offvalue='No',
+                                       onvalue='Yes')
+    chbox_mode_calculate.grid(column=0, row=8, padx=10, pady=10)
+
     #
     # Создаем кнопку для запуска функции генерации файлов ДПО
 
     btn_create_files_dpo = Button(tab_create_doc, text='Создать документы ДПО', font=('Arial Bold', 20),
                                   command=generate_docs_dpo
                                   )
-    btn_create_files_dpo.grid(column=0, row=8, padx=10, pady=10)
+    btn_create_files_dpo.grid(column=0, row=9, padx=10, pady=10)
 
     # Создаем кнопку для запуска функции генерации файлов ПО
     btn_create_files_po = Button(tab_create_doc, text='Создать документы ПО', font=('Arial Bold', 20),
                                  command=generate_docs_po
                                  )
-    btn_create_files_po.grid(column=0, row=9, padx=10, pady=10)
+    btn_create_files_po.grid(column=0, row=10, padx=10, pady=10)
 
     # Создаем кнопку для создания документов из таблиц с произвольной структурой
     btn_create_files_other = Button(tab_create_doc, text='Создать документы\n из произвольной таблицы',
                                     font=('Arial Bold', 20),
                                     command=generate_docs_other
                                     )
-    btn_create_files_other.grid(column=0, row=10, padx=10, pady=10)
+    btn_create_files_other.grid(column=0, row=11, padx=10, pady=10)
+
+
+
 
     # Добавляем виджеты на вкладку создания отчетов
     lbl_hello = Label(tab_create_report,
@@ -3727,6 +3903,8 @@ if __name__ == '__main__':
                                       command=create_general_table
                                       )
     btn_create_general_table.grid(column=0, row=6, padx=10, pady=10)
+
+
 
     # Добавляем виджеты на вклдаку Обработки данных
     # Создаем метку для описания назначения программы
