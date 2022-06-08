@@ -52,14 +52,14 @@ def select_end_folder_educ_obraz():
     global path_to_end_folder_obraz_program
     path_to_end_folder_obraz_program = filedialog.askdirectory()
 
-# def select_file_template_educ_program():
-#     """
-#     Функция для выбора файла шаблона
-#     :return: Путь к файлу шаблона
-#     """
-#     global name_file_template_educ_program
-#     name_file_template_educ_program = filedialog.askopenfilename(
-#         filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
+def select_file_template_educ_program():
+    """
+    Функция для выбора файла шаблона
+    :return: Путь к файлу шаблона
+    """
+    global name_file_template_educ_program
+    name_file_template_educ_program = filedialog.askopenfilename(
+        filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
 
 # Вспомогательные для ПО
 def select_file_data_obraz_po():
@@ -79,14 +79,14 @@ def select_end_folder_educ_obraz_po():
     global path_to_end_folder_obraz_program_po
     path_to_end_folder_obraz_program_po = filedialog.askdirectory()
 
-# def select_file_template_educ_program_po():
-#     """
-#     Функция для выбора файла шаблона
-#     :return: Путь к файлу шаблона
-#     """
-#     global name_file_template_educ_program_po
-#     name_file_template_educ_program_po = filedialog.askopenfilename(
-#         filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
+def select_file_template_educ_program_po():
+    """
+    Функция для выбора файла шаблона
+    :return: Путь к файлу шаблона
+    """
+    global name_file_template_educ_program_po
+    name_file_template_educ_program_po = filedialog.askopenfilename(
+        filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
 
 def convert_date(cell):
     """
@@ -111,7 +111,6 @@ def create_educ_program():
     Функция для генерации образовательных программ
     """
     try:
-        name_file_template_educ_program = resource_path('Автошаблон_ПК_ЦОПП от 08_06_2022.docx')
         # Открываем таблицу
         base_program_df = pd.read_excel(name_file_data_obraz_program, sheet_name='1. По программе', dtype=str)
         base_program_df.fillna('', inplace=True)
@@ -207,8 +206,7 @@ def create_educ_program_po():
     Функция для генерации программ ПО
     """
     try:
-        # Получаем шаблон
-        name_file_template_educ_program_po = resource_path('Автошаблон_ПО_ЦОПП_08_06_2022.docx')
+
         # Открываем таблицу
         base_program_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='1. По программе', dtype=str)
         base_program_df.fillna('', inplace=True)
@@ -350,23 +348,23 @@ if __name__ == '__main__':
                           )
     btn_data_data_obraz.grid(column=0, row=2, padx=10, pady=10)
 
-    # #Создаем кнопку выбора шаблона
-    # # Создаем кнопку Выбрать файл с данными
-    # btn_template_educ_program = Button(tab_create_educ_program, text='2) Выберите шаблон', font=('Arial Bold', 20),
-    #                       command=select_file_template_educ_program
-    #                       )
-    # btn_template_educ_program.grid(column=0, row=3, padx=10, pady=10)
+    #Создаем кнопку выбора шаблона
+    # Создаем кнопку Выбрать файл с данными
+    btn_template_educ_program = Button(tab_create_educ_program, text='2) Выберите шаблон', font=('Arial Bold', 20),
+                          command=select_file_template_educ_program
+                          )
+    btn_template_educ_program.grid(column=0, row=3, padx=10, pady=10)
 
 
 
     # Создаем кнопку для выбора папки куда будут генерироваться файлы
 
-    btn_choose_end_folder_educ_program = Button(tab_create_educ_program, text='2) Выберите конечную папку', font=('Arial Bold', 20),
+    btn_choose_end_folder_educ_program = Button(tab_create_educ_program, text='3) Выберите конечную папку', font=('Arial Bold', 20),
                                        command=select_end_folder_educ_obraz
                                        )
     btn_choose_end_folder_educ_program.grid(column=0, row=4, padx=10, pady=10)
 
-    btn_create_educ_program = Button(tab_create_educ_program, text='3) Создать программу ПК', font=('Arial Bold', 20),
+    btn_create_educ_program = Button(tab_create_educ_program, text='4) Создать программу ПК', font=('Arial Bold', 20),
                                        command=create_educ_program
                                        )
     btn_create_educ_program.grid(column=0, row=5, padx=10, pady=10)
@@ -393,22 +391,22 @@ if __name__ == '__main__':
                                  )
     btn_data_data_obraz_po.grid(column=0, row=2, padx=10, pady=10)
 
-    # # Создаем кнопку выбора шаблона
-    # # Создаем кнопку Выбрать файл с данными
-    # btn_template_educ_program_po = Button(tab_create_educ_program_po, text='2) Выберите шаблон', font=('Arial Bold', 20),
-    #                                    command=select_file_template_educ_program_po
-    #                                    )
-    # btn_template_educ_program_po.grid(column=0, row=3, padx=10, pady=10)
+    # Создаем кнопку выбора шаблона
+    # Создаем кнопку Выбрать файл с данными
+    btn_template_educ_program_po = Button(tab_create_educ_program_po, text='2) Выберите шаблон', font=('Arial Bold', 20),
+                                       command=select_file_template_educ_program_po
+                                       )
+    btn_template_educ_program_po.grid(column=0, row=3, padx=10, pady=10)
 
-    # Создаем кнопку для выбора папки куда будут генерироваться файлы
+    #Создаем кнопку для выбора папки куда будут генерироваться файлы
 
-    btn_choose_end_folder_educ_program_po = Button(tab_create_educ_program_po, text='2) Выберите конечную папку',
+    btn_choose_end_folder_educ_program_po = Button(tab_create_educ_program_po, text='3) Выберите конечную папку',
                                                 font=('Arial Bold', 20),
                                                 command=select_end_folder_educ_obraz_po
                                                 )
     btn_choose_end_folder_educ_program_po.grid(column=0, row=4, padx=10, pady=10)
 
-    btn_create_educ_program_po = Button(tab_create_educ_program_po, text='3) Создать программу ПО', font=('Arial Bold', 20),
+    btn_create_educ_program_po = Button(tab_create_educ_program_po, text='4) Создать программу ПО', font=('Arial Bold', 20),
                                      command=create_educ_program_po
                                      )
     btn_create_educ_program_po.grid(column=0, row=5, padx=10, pady=10)
