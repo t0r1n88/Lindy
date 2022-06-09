@@ -193,12 +193,20 @@ def create_educ_program():
         name_program = base_program_df['Наименование_программы'].tolist()[0]
         t = time.localtime()
         current_time = time.strftime('%H_%M_%S', t)
+        length_str = f'{path_to_end_folder_obraz_program}/Программа повышения квалификации {name_program} {current_time}.docx'
+        print(len(length_str))
+
         doc.save(
             f'{path_to_end_folder_obraz_program}/Программа повышения квалификации {name_program} {current_time}.docx')
 
 
+
     except NameError:
-        messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+        messagebox.showerror('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    except FileNotFoundError:
+        # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
+        messagebox.showerror('ЦОПП Бурятия', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Создание образовательной программы\nЗавершено!')
 
@@ -280,7 +288,7 @@ def create_educ_program_po():
         # Добавляем в словарь context полностью весь список словарей data ,чтобы реализовать добавление в одну таблицу данных из разных ключей
         context['prepod_lst'] = unique_prepod_df.to_dict('records')
         context['up_lst'] = up_df.to_dict('records')
-        context['short_up_lst'] = short_up_df.to_dict('records')
+        context['short_up_lst'] = short_up_df.to_diкct('records')
         context['qual_prepod_lst'] = level_qual_prepod.to_dict('records')
         # Список лиц осваивающих программы
         context['lst_multi_category'] = multi_line_df.to_dict('records')
@@ -305,6 +313,9 @@ def create_educ_program_po():
             f'{path_to_end_folder_obraz_program_po}/Программа профессионального обучения {name_program} {current_time}.docx')
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    except FileNotFoundError:
+        # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
+        messagebox.showerror('ЦОПП Бурятия', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Создание образовательной программы\nЗавершено!')
 

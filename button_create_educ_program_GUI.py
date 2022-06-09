@@ -198,6 +198,9 @@ def create_educ_program():
 
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    except FileNotFoundError:
+        # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
+        messagebox.showerror('ЦОПП Бурятия', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Создание образовательной программы\nЗавершено!')
 
@@ -303,6 +306,9 @@ def create_educ_program_po():
             f'{path_to_end_folder_obraz_program_po}/Программа профессионального обучения {name_program} {current_time}.docx')
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+    except FileNotFoundError:
+        # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
+        messagebox.showerror('ЦОПП Бурятия', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Создание образовательной программы\nЗавершено!')
 
