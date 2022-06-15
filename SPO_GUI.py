@@ -85,23 +85,6 @@ def generate_docs_other():
     except NameError as e:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
-def select_file_data_po():
-    """
-    Функция для выбора файла с данными на основе которых будет генерироваться документ ПО
-    :return: Путь к файлу с данными
-    """
-    global name_file_data_po
-    # Получаем путь к файлу
-    name_file_data_po = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
-
-
-def select_end_folder_po():
-    """
-    Функция для выбора папки куда будут генерироваться файлы
-    :return:
-    """
-    global path_to_end_folder_po
-    path_to_end_folder_po = filedialog.askdirectory()
 
 
 

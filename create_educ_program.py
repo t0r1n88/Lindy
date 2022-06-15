@@ -85,17 +85,20 @@ name_file_template_educ_program = 'Автошаблон_ПК_программа 
 path_to_end_folder_obraz_program = 'data'
 
 # Открываем таблицу
+# Открываем таблицу
 base_program_df = pd.read_excel(name_file_data_obraz_program, sheet_name='1. По программе', dtype=str)
-base_program_df.fillna('',inplace=True)
+base_program_df.fillna('', inplace=True)
 base_up_df = pd.read_excel(name_file_data_obraz_program, sheet_name='2. По дисциплинам_модулям', dtype=str)
 
-base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],dayfirst=True,errors='coerce')
+base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
+                                                          dayfirst=True, errors='coerce')
 base_program_df['Дата_приказа_МИНТРУДА'] = base_program_df['Дата_приказа_МИНТРУДА'].apply(convert_date)
 
 # Создаем специализованный датафрейм который включает в себя категории, технологии и пр.Т.е все что включает больше одной строки
-multi_line_df = base_program_df[['Категория_слушателей','Форма_обучения','Технологии_обучения','Разработчики_программы']]
+multi_line_df = base_program_df[
+    ['Категория_слушателей', 'Форма_обучения', 'Технологии_обучения', 'Разработчики_программы']]
 # Заменяем пустые строки на Nan
-multi_line_df.replace('',np.NaN,inplace=True)
+multi_line_df.replace('', np.NaN, inplace=True)
 # Для технологий
 tech_df = multi_line_df['Технологии_обучения']
 tech_df.dropna(inplace=True)
@@ -108,28 +111,31 @@ dev_df.dropna(inplace=True)
 
 # Незаполненые ячейки заполняем пустой строкой
 # Создаем специализированные датафреймы
-all_prepod_df = base_up_df[['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж', 'Трудовая_функция', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
+all_prepod_df = base_up_df[
+    ['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж',
+     'Трудовая_функция', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
 # удаляем пустые строки
 all_prepod_df.dropna(axis=0, how='any', inplace=True, thresh=3)
 all_prepod_df.fillna('', inplace=True)
 # Удаляем дубликаты преподавателей, чтобы корректно заполнять таблицу преподавательского состава
 unique_prepod_df = all_prepod_df.copy()
-unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'],inplace=True,ignore_index=True)
+unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'], inplace=True, ignore_index=True)
+unique_prepod_df.replace('', np.NaN, inplace=True)
+unique_prepod_df.dropna(axis=0, how='any', inplace=True, subset=['ФИО_преподавателя'])
 
 # Удаляем дубликаты уровней квалификации
 level_qual_prepod = all_prepod_df.copy()
-level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'],inplace=True,ignore_index=True)
+level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'], inplace=True, ignore_index=True)
 
 # Создаем и обрабатываем датафрейм  учебной программы
-up_df = base_up_df[['Наименование_раздела','Трудоемкость','Лекции_час','Практики_час','СРС_час','Трудовая_функция','Уровень_квалификации','Код_ОПК_ПК_по_ФГОС','Наименование_ПК_ОПК']]
-up_df.dropna(axis=0,how='all',inplace=True)
-up_df.fillna('',inplace=True)
+up_df = base_up_df[
+    ['Наименование_раздела', 'Трудоемкость', 'Лекции_час', 'Практики_час', 'СРС_час', 'Трудовая_функция',
+     'Уровень_квалификации', 'Код_ОПК_ПК_по_ФГОС', 'Наименование_ПК_ОПК']]
+up_df.dropna(axis=0, how='all', inplace=True)
+up_df.fillna('-', inplace=True)
 
 # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации,3.3
 short_up_df = up_df[up_df['Наименование_раздела'] != 'ИТОГО']
-
-
-
 
 # Конвертируем датафрейм с описанием программы в список словарей
 data_program = base_program_df.to_dict('records')
@@ -149,7 +155,7 @@ context['qual_prepod_lst'] = level_qual_prepod.to_dict('records')
 context['lst_tech'] = tech_df
 # Список для разработчиков
 context['lst_dev'] = dev_df
-#Список для категорий обучения
+# Список для категорий обучения
 context['lst_cat'] = cat_df
 
 doc = DocxTemplate(name_file_template_educ_program)
