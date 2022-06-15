@@ -69,8 +69,8 @@ def convert_date(cell):
         # # messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
 
-name_file_template_educ_program_po = 'Автошаблон_ПО_ЦОПП_02_06_2022.docx'
-name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО_от_06_06_2022.xlsx'
+name_file_template_educ_program_po = 'Автошаблон_ПО_ЦОПП_14_06_2022.docx'
+name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО_от_14_06_2022.xlsx'
 path_to_end_folder_obraz_program_po= 'data'
 
 # Создаем базовый датафрейм по данным программы
@@ -100,17 +100,11 @@ level_cat_str = ','.join(level_cat_df)
 dev_df = multi_line_df['Разработчики_программы']
 dev_df.dropna(inplace=True)
 
-
-
-
-
-
-
 # Создаем базовый датафрейм по дисциплинам и модулям
 base_up_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='2. По дисциплинам_модулям', dtype=str)
 # Незаполненые ячейки заполняем пустой строкой
 # Создаем специализированные датафреймы
-all_prepod_df = base_up_df[['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж', 'Трудовая_функция', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
+all_prepod_df = base_up_df[['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж', 'Форма_контроля', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
 # удаляем пустые строки
 all_prepod_df.dropna(axis=0, how='any', inplace=True, thresh=3)
 all_prepod_df.fillna('', inplace=True)
@@ -123,7 +117,7 @@ level_qual_prepod = all_prepod_df.copy()
 level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'],inplace=True,ignore_index=True)
 
 # Создаем и обрабатываем датафрейм  учебной программы
-up_df = base_up_df[['Наименование_раздела','Трудоемкость','Лекции_час','Практики_час','СРС_час','Трудовая_функция','Уровень_квалификации','Код_ОПК_ПК_по_ФГОС','Наименование_ПК_ОПК']]
+up_df = base_up_df[['Наименование_раздела','Трудоемкость','Лекции_час','Практики_час','СРС_час','Форма_контроля','Уровень_квалификации']]
 up_df.dropna(axis=0,how='all',inplace=True)
 up_df.fillna('',inplace=True)
 

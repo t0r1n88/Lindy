@@ -246,15 +246,13 @@ def create_educ_program_po():
         # Создаем специализированные датафреймы
         all_prepod_df = base_up_df[
             ['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж',
-             'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
+             'Форма_контроля', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
         # удаляем пустые строки
         all_prepod_df.dropna(axis=0, how='any', inplace=True, thresh=3)
         all_prepod_df.fillna('', inplace=True)
         # Удаляем дубликаты преподавателей, чтобы корректно заполнять таблицу преподавательского состава
         unique_prepod_df = all_prepod_df.copy()
         unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'], inplace=True, ignore_index=True)
-        unique_prepod_df.replace('',np.NaN,inplace=True)
-        unique_prepod_df.dropna(axis=0,how='any',inplace=True,subset=['ФИО_преподавателя'])
 
         # Удаляем дубликаты уровней квалификации
         level_qual_prepod = all_prepod_df.copy()
@@ -262,10 +260,10 @@ def create_educ_program_po():
 
         # Создаем и обрабатываем датафрейм  учебной программы
         up_df = base_up_df[
-            ['Наименование_раздела', 'Трудоемкость', 'Лекции_час', 'Практики_час', 'СРС_час',
+            ['Наименование_раздела', 'Трудоемкость', 'Лекции_час', 'Практики_час', 'СРС_час', 'Форма_контроля',
              'Уровень_квалификации']]
         up_df.dropna(axis=0, how='all', inplace=True)
-        up_df.fillna('-', inplace=True)
+        up_df.fillna('', inplace=True)
 
         # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации,3.3
         short_up_df = up_df[up_df['Наименование_раздела'] != 'ИТОГО']
@@ -304,6 +302,7 @@ def create_educ_program_po():
         current_time = time.strftime('%H_%M_%S', t)
         doc.save(
             f'{path_to_end_folder_obraz_program_po}/Программа профессионального обучения {name_program} {current_time}.docx')
+
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except FileNotFoundError:
