@@ -2946,7 +2946,7 @@ def create_report_svod():
         sheet['A3'] = 'Количество прошедших обучение ПО'
         sheet['A4'] = 'Общее количество прошедших обучение в ЦОПП'
 
-        sheet['B1'] = 'Количество обучающихся'
+        sheet['B1'] = 'Количество обучившихся'
         sheet['B2'] = total_students_dpo
         sheet['B3'] = total_students_po
         sheet['B4'] = total_students
@@ -2972,7 +2972,7 @@ def create_report_svod():
 
         sheet['A7'] = 'Вид обучения'
         sheet['B7'] = 'Название программы'
-        sheet['C7'] = 'Количество обучающихся'
+        sheet['C7'] = 'Количество обучившихся'
 
         for row in df_counting_type_and_name_trainning.values.tolist():
             sheet.append(row)
