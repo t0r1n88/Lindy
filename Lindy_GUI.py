@@ -153,11 +153,11 @@ def calculate_age(born):
         messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
         quit()
     except ValueError:
-        print(born)
+        print(f' Ошибка при подсчете текущего возраста ячейки {born}')
         messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         quit()
     except:
-        print(born)
+        print(f' Ошибка при подсчете текущего возраста ячейки {born}')
         messagebox.showerror('ЦОПП Бурятия', 'Отсутствует или некорректная дата \nПроверьте файл!')
         quit()
 
@@ -207,11 +207,11 @@ def convert_date(cell):
         string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
         return string_date
     except TypeError:
-        print(cell)
+        print(f' Ошибка при конвертации ячейки {cell}')
         messagebox.showerror('ЦОПП Бурятия', 'Проверьте правильность заполнения ячеек с датой!!!')
         quit()
     except ValueError:
-        print(cell)
+        print(f' Ошибка при конвертации ячейки {cell}')
         messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         quit()
 
@@ -716,6 +716,9 @@ def create_report_one_pk():
     try:
 
         df_dpo = pd.read_excel(name_file_data_report, sheet_name='ДПО')
+        # проверяем на наличие данных
+        if df_dpo.shape[0] == 0:
+            messagebox.showerror('ЦОПП Бурятия', 'Лист с данными ПК не заполнен!')
 
         # Создаем шрифт которым будем выделять названия таблиц
         font_name_table = Font(name='Arial Black', size=15, italic=True)
@@ -743,6 +746,8 @@ def create_report_one_pk():
         wb.create_sheet(title='2.3.2 По видам и форме обучения', index=17)
         wb.create_sheet(title='Раздел 2.4', index=18)
         wb.create_sheet(title='Раздел 2.5', index=19)
+        # Удаляем пустой лист
+        del wb['Sheet']
 
         # Раздел 1.3
         # Количество программ по каждому виду обучения
@@ -1889,6 +1894,8 @@ def create_report_one_po():
     try:
         df_po = pd.read_excel(name_file_data_report, sheet_name='ПО',
                               dtype={'Гражданство_получателя_код_страны_по_ОКСМ': str})
+        if df_po.shape[0] == 0:
+            messagebox.showerror('ЦОПП Бурятия','Лист с данными ПО не заполнен!')
 
         # Создаем шрифт которым будем выделять названия таблиц
         font_name_table = Font(name='Arial Black', size=15, italic=True)
@@ -1905,6 +1912,8 @@ def create_report_one_po():
         wb.create_sheet(title='Раздел 2.4', index=6)
         wb.create_sheet(title='Раздел 2.5', index=7)
         wb.create_sheet(title='Раздел 2.6', index=8)
+        # Удаляем пустой лист
+        del wb['Sheet']
 
         df_po_1_3_base = df_po.copy()
         df_po_1_3_base['for_counting'] = 1
@@ -1971,7 +1980,8 @@ def create_report_one_po():
             'Программа_профессионального_обучения_направление_подготовки').agg({'for_counting': 'sum'})
 
         # Считаем электронное обучение
-        df_po_1_3_distant_ao = df_po_1_3_base[(df_po_1_3_base['Использование_ЭО'] != 'Без применения ЭО') & ( df_po_1_3_base['Использование_ЭО'] !='Не заполнено') ]
+        df_po_1_3_distant_ao = df_po_1_3_base[(df_po_1_3_base['Использование_ЭО'] != 'Без применения ЭО') & (
+                    df_po_1_3_base['Использование_ЭО'] != 'Не заполнено')]
 
         po_group_quantity_distant_ao = df_po_1_3_distant_ao.groupby(
             'Наименование_программы_профессионального_обучения').agg(
@@ -1994,7 +2004,8 @@ def create_report_one_po():
         df_po_1_3['Численность слушателей обученных только с ЭО '] = df_po_1_3_distant_only_ao.groupby(
             'Программа_профессионального_обучения_направление_подготовки').agg({'for_counting': 'sum'})
 
-        df_po_1_3_distant_dot = df_po_1_3_base[(df_po_1_3_base['Использование_ДОТ'] != 'Без применения ДОТ') & (df_po_1_3_base['Использование_ДОТ'] !='Не заполнено')]
+        df_po_1_3_distant_dot = df_po_1_3_base[(df_po_1_3_base['Использование_ДОТ'] != 'Без применения ДОТ') & (
+                    df_po_1_3_base['Использование_ДОТ'] != 'Не заполнено')]
 
         po_group_quantity_distant_dot = df_po_1_3_distant_dot.groupby(
             'Наименование_программы_профессионального_обучения').agg(
@@ -2048,6 +2059,7 @@ def create_report_one_po():
         wb['Раздел 1.3']['J2'].alignment = Alignment(wrap_text=True)
         wb['Раздел 1.3']['K2'].alignment = Alignment(wrap_text=True)
 
+        # 2.1.1
         # Создаем раздел 2.1.1
         df_po_2_1_1_base = df_po.copy()
         df_po_2_1_1_base['for_counting'] = 1
@@ -2135,10 +2147,10 @@ def create_report_one_po():
                 if len(r) != 1:
                     wb['Раздел 2.1.1'].append(r)
             wb['Раздел 2.1.1'][
-                f'A2'] = 'В таблице отображаются ТОЛЬКО ТЕ показатели которые присутствуют в ИСХОДНОЙ таблице!!!!'
+                f'A2'] = 'Код професии'
             wb['Раздел 2.1.1'][f'A2'].font = font_name_table
             wb['Раздел 2.1.1']['A2'].alignment = Alignment(wrap_text=True)
-            wb['Раздел 2.1.1'][f'A3'] = 'Код профессии при наличии'
+
             wb['Раздел 2.1.1'].column_dimensions['A'].width = 50
             wb['Раздел 2.1.1'].column_dimensions['C'].width = 15
             wb['Раздел 2.1.1'].column_dimensions['D'].width = 15
@@ -2435,6 +2447,7 @@ def create_report_one_po():
                     df_po_2_3_base['Сведения_об_ограничении_возможностей_здоровья'] != 'Не заполнено')]
 
         if df_po_2_3_base.shape[0] == 0:
+            wb['Раздел 2.3'].column_dimensions['A'].width = 80
             wb['Раздел 2.3'][f'A1'] = 'Обучение лиц с ограниченными возможностями здоровья и инвалидов'
             wb['Раздел 2.3'][f'A1'].font = font_name_table
             wb['Раздел 2.3'][
@@ -3537,6 +3550,8 @@ def create_report_indicator():
         # Создаем листы
         wb.create_sheet(title='Индикаторы', index=0)
         wb.create_sheet(title='Госзадание', index=1)
+        # Удаляем пустой лист
+        del wb['Sheet']
         # Создаем цвет заливки
         yellowFill = PatternFill(start_color='ffff00',
                                  end_color='ffff00',
@@ -3676,7 +3691,7 @@ def create_report_indicator():
 if __name__ == '__main__':
     window = Tk()
     window.title('ЦОПП Бурятия')
-    window.geometry('700x950')
+    window.geometry('700x970')
     window.resizable(False, False)
 
 
@@ -3771,7 +3786,7 @@ if __name__ == '__main__':
     # Создаем чекбокс для выбора режима подсчета
 
     chbox_mode_calculate = Checkbutton(frame_data_for_doc,
-                                       text='Поставьте галочку, если вам нужно чтобы все файлы были объединены в один',
+                                       text='Поставьте галочку, если вам нужно чтобы все документы\n были объединены в один файл',
                                        variable=mode_combine_value,
                                        offvalue='No',
                                        onvalue='Yes')
