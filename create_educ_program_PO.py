@@ -23,8 +23,44 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
+def select_file_template_doc():
+    """
+    Функция для выбора файла шаблона
+    :return: Путь к файлу шаблона
+    """
+    global name_file_template_doc
+    name_file_template_doc = filedialog.askopenfilename(
+        filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
 
 
+def select_file_data_obraz():
+    """
+    Функция для выбора файла с данными на основе которых будет генерироваться документ
+    :return: Путь к файлу с данными
+    """
+    global name_file_data_obraz_program
+    # Получаем путь к файлу
+    name_file_data_obraz_program = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
+
+def select_end_folder_educ_obraz():
+    """
+    Функция для выбора папки куда будут генерироваться файлы
+    :return:
+    """
+    global path_to_end_folder_obraz_program
+    path_to_end_folder_obraz_program = filedialog.askdirectory()
+
+def select_file_template_educ_program():
+    """
+    Функция для выбора файла шаблона
+    :return: Путь к файлу шаблона
+    """
+    global name_file_template_educ_program
+    name_file_template_educ_program = filedialog.askopenfilename(
+        filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
+
+# Вспомогательные для ПО
 def select_file_data_obraz_po():
     """
     Функция для выбора файла с данными на основе которых будет генерироваться документ
@@ -69,22 +105,29 @@ def convert_date(cell):
         # # messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
 
-name_file_template_educ_program_po = 'Автошаблон_ПО_ЦОПП_14_06_2022.docx'
-name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО_от_14_06_2022.xlsx'
+name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО.xlsx'
+name_file_template_educ_program_po = 'Автошаблон_ПО_ЦОПП.docx'
+
 path_to_end_folder_obraz_program_po= 'data'
 
 # Создаем базовый датафрейм по данным программы
 base_program_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='1. По программе', dtype=str)
 base_program_df.fillna('', inplace=True)
 
+# Убираем пробельные символы сначала и в конце каждой ячейки
+base_program_df =base_program_df.applymap(str.strip,na_action='ignore')
+
 # Обрабатываем колнку дата приказа Минтруда
-base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],dayfirst=True,errors='coerce')
+base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
+                                                          dayfirst=True, errors='coerce')
 base_program_df['Дата_приказа_МИНТРУДА'] = base_program_df['Дата_приказа_МИНТРУДА'].apply(convert_date)
 
 # Создаем специализованный датафрейм который включает в себя категории, технологии и пр.Т.е все что включает больше одной строки
-multi_line_df = base_program_df[['Категория_слушателей','Форма_обучения','Уровни_квалификации','Технологии_обучения','Разработчики_программы']]
+multi_line_df = base_program_df[
+    ['Категория_слушателей', 'Форма_обучения', 'Уровни_квалификации', 'Технологии_обучения',
+     'Разработчики_программы']]
 # Заменяем пустые строки на Nan
-multi_line_df.replace('',np.NaN,inplace=True)
+multi_line_df.replace('', np.NaN, inplace=True)
 # Для технологий
 tech_df = multi_line_df['Технологии_обучения']
 tech_df.dropna(inplace=True)
@@ -93,7 +136,7 @@ cat_df = multi_line_df['Категория_слушателей']
 cat_df.dropna(inplace=True)
 # Обрабатываем уровни квалификации чтобы превратить в строку
 # Создаем список, удаляя наны
-level_cat_df =multi_line_df['Уровни_квалификации'].dropna().to_list()
+level_cat_df = multi_line_df['Уровни_квалификации'].dropna().to_list()
 # Создаем строку
 level_cat_str = ','.join(level_cat_df)
 # для разработчиков
@@ -102,28 +145,33 @@ dev_df.dropna(inplace=True)
 
 # Создаем базовый датафрейм по дисциплинам и модулям
 base_up_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='2. По дисциплинам_модулям', dtype=str)
+base_up_df = base_up_df.applymap(str.strip,na_action='ignore')
 # Незаполненые ячейки заполняем пустой строкой
+
 # Создаем специализированные датафреймы
-all_prepod_df = base_up_df[['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж', 'Форма_контроля', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
+all_prepod_df = base_up_df[
+    ['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж',
+     'Форма_контроля', 'Уровень_квалификации', 'Полномочия', 'Характер_умений', 'Характер_знаний']]
 # удаляем пустые строки
 all_prepod_df.dropna(axis=0, how='any', inplace=True, thresh=3)
 all_prepod_df.fillna('', inplace=True)
 # Удаляем дубликаты преподавателей, чтобы корректно заполнять таблицу преподавательского состава
 unique_prepod_df = all_prepod_df.copy()
-unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'],inplace=True,ignore_index=True)
+unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'], inplace=True, ignore_index=True)
 
 # Удаляем дубликаты уровней квалификации
 level_qual_prepod = all_prepod_df.copy()
-level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'],inplace=True,ignore_index=True)
+level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'], inplace=True, ignore_index=True)
 
 # Создаем и обрабатываем датафрейм  учебной программы
-up_df = base_up_df[['Наименование_раздела','Трудоемкость','Лекции_час','Практики_час','СРС_час','Форма_контроля','Уровень_квалификации']]
-up_df.dropna(axis=0,how='all',inplace=True)
-up_df.fillna('',inplace=True)
+up_df = base_up_df[
+    ['Наименование_раздела', 'Трудоемкость', 'Лекции_час', 'Практики_час', 'СРС_час', 'Форма_контроля',
+     'Уровень_квалификации']]
+up_df.dropna(axis=0, how='all', inplace=True)
+up_df.fillna('', inplace=True)
 
 # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации,3.3
 short_up_df = up_df[up_df['Наименование_раздела'] != 'ИТОГО']
-
 
 # Конвертируем датафрейм с описанием программы в список словарей
 data_program = base_program_df.to_dict('records')
@@ -142,13 +190,12 @@ context['qual_prepod_lst'] = level_qual_prepod.to_dict('records')
 context['lst_multi_category'] = multi_line_df.to_dict('records')
 # Список для технологий обучения
 context['lst_tech'] = tech_df
-#Список для категорий обучения
+# Список для категорий обучения
 context['lst_cat'] = cat_df
 # Список для разработчиков
 context['lst_dev'] = dev_df
 # Добавляем в контекст строку для уровней
 context['level_cat_str'] = level_cat_str
-
 
 doc = DocxTemplate(name_file_template_educ_program_po)
 # Создаем документ

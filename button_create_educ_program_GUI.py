@@ -114,7 +114,10 @@ def create_educ_program():
         # Открываем таблицу
         base_program_df = pd.read_excel(name_file_data_obraz_program, sheet_name='1. По программе', dtype=str)
         base_program_df.fillna('', inplace=True)
+        # Убираем пробельные символы сначала и в конце каждой ячейки
+        base_program_df = base_program_df.applymap(str.strip,na_action='ignore')
         base_up_df = pd.read_excel(name_file_data_obraz_program, sheet_name='2. По дисциплинам_модулям', dtype=str)
+        base_up_df = base_up_df.applymap(str.strip,na_action='ignore')
 
         base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
                                                                   dayfirst=True, errors='coerce')
@@ -146,8 +149,8 @@ def create_educ_program():
         # Удаляем дубликаты преподавателей, чтобы корректно заполнять таблицу преподавательского состава
         unique_prepod_df = all_prepod_df.copy()
         unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'], inplace=True, ignore_index=True)
-        unique_prepod_df.replace('',np.NaN,inplace=True)
-        unique_prepod_df.dropna(axis=0,how='any',inplace=True,subset=['ФИО_преподавателя'])
+        unique_prepod_df.replace('', np.NaN, inplace=True)
+        unique_prepod_df.dropna(axis=0, how='any', inplace=True, subset=['ФИО_преподавателя'])
 
         # Удаляем дубликаты уровней квалификации
         level_qual_prepod = all_prepod_df.copy()
@@ -196,6 +199,7 @@ def create_educ_program():
             f'{path_to_end_folder_obraz_program}/Программа повышения квалификации {name_program} {current_time}.docx')
 
 
+
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except FileNotFoundError:
@@ -213,6 +217,9 @@ def create_educ_program_po():
         # Открываем таблицу
         base_program_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='1. По программе', dtype=str)
         base_program_df.fillna('', inplace=True)
+
+        # Убираем пробельные символы сначала и в конце каждой ячейки
+        base_program_df = base_program_df.applymap(str.strip,na_action='ignore')
 
         # Обрабатываем колнку дата приказа Минтруда
         base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
@@ -242,7 +249,9 @@ def create_educ_program_po():
 
         # Создаем базовый датафрейм по дисциплинам и модулям
         base_up_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='2. По дисциплинам_модулям', dtype=str)
+        base_up_df = base_up_df.applymap(str.strip,na_action='ignore')
         # Незаполненые ячейки заполняем пустой строкой
+
         # Создаем специализированные датафреймы
         all_prepod_df = base_up_df[
             ['ФИО_преподавателя', 'Научная_степень_звание_должность', 'Сфера_пед_интересов', 'Опыт_стаж',

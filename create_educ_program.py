@@ -61,6 +61,33 @@ def select_file_template_educ_program():
     name_file_template_educ_program = filedialog.askopenfilename(
         filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
 
+# Вспомогательные для ПО
+def select_file_data_obraz_po():
+    """
+    Функция для выбора файла с данными на основе которых будет генерироваться документ
+    :return: Путь к файлу с данными
+    """
+    global name_file_data_obraz_program_po
+    # Получаем путь к файлу
+    name_file_data_obraz_program_po = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
+def select_end_folder_educ_obraz_po():
+    """
+    Функция для выбора папки куда будут генерироваться файлы
+    :return:
+    """
+    global path_to_end_folder_obraz_program_po
+    path_to_end_folder_obraz_program_po = filedialog.askdirectory()
+
+def select_file_template_educ_program_po():
+    """
+    Функция для выбора файла шаблона
+    :return: Путь к файлу шаблона
+    """
+    global name_file_template_educ_program_po
+    name_file_template_educ_program_po = filedialog.askopenfilename(
+        filetypes=(('Word files', '*.docx'), ('all files', '*.*')))
+
 def convert_date(cell):
     """
     Функция для конвертации даты в формате 1957-05-10 в формат 10.05.1957(строковый)
@@ -78,17 +105,20 @@ def convert_date(cell):
         # print(cell)
         # # messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
-name_file_data_obraz_program = 'Для автозаполнения ОП_ПК от 02_06_2022.xlsx'
-name_file_template_educ_program = 'Автошаблон_ПК_программа от 02_06_2022.docx'
+name_file_data_obraz_program = 'Для автозаполнения ОП_ПК.xlsx'
+name_file_template_educ_program = 'Автошаблон_ПК_ЦОПП.docx'
 
-# name_file_template_doc = 'темп.docx'
+
 path_to_end_folder_obraz_program = 'data'
 
 # Открываем таблицу
 # Открываем таблицу
 base_program_df = pd.read_excel(name_file_data_obraz_program, sheet_name='1. По программе', dtype=str)
 base_program_df.fillna('', inplace=True)
+# Убираем пробельные символы сначала и в конце каждой ячейки
+base_program_df =base_program_df.applymap(str.strip,na_action='ignore')
 base_up_df = pd.read_excel(name_file_data_obraz_program, sheet_name='2. По дисциплинам_модулям', dtype=str)
+base_up_df = base_up_df.applymap(str.strip,na_action='ignore')
 
 base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
                                                           dayfirst=True, errors='coerce')
@@ -120,8 +150,8 @@ all_prepod_df.fillna('', inplace=True)
 # Удаляем дубликаты преподавателей, чтобы корректно заполнять таблицу преподавательского состава
 unique_prepod_df = all_prepod_df.copy()
 unique_prepod_df.drop_duplicates(subset=['ФИО_преподавателя'], inplace=True, ignore_index=True)
-unique_prepod_df.replace('', np.NaN, inplace=True)
-unique_prepod_df.dropna(axis=0, how='any', inplace=True, subset=['ФИО_преподавателя'])
+unique_prepod_df.replace('',np.NaN,inplace=True)
+unique_prepod_df.dropna(axis=0,how='any',inplace=True,subset=['ФИО_преподавателя'])
 
 # Удаляем дубликаты уровней квалификации
 level_qual_prepod = all_prepod_df.copy()
