@@ -428,7 +428,7 @@ def generate_docs_dpo():
                     current_time = time.strftime('%H_%M_%S', t)
 
                     doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
-                messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+
             else:
                 # Список с созданными файлами
                 files_lst = []
@@ -472,6 +472,7 @@ def generate_docs_dpo():
                 f'{path_to_end_folder_doc}/{name_doc} {name_file_dpo} от {current_time}.docx')
 
     except NameError:
+
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     else:
         messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
@@ -530,7 +531,7 @@ def generate_docs_po():
 
                         doc.save(
                             f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
-                    messagebox.showinfo('ЦОПП Бурятия', 'Создание документов успешно завершено!')
+
                 else:
                     # Список с созданными файлами
                     files_lst = []
@@ -3061,6 +3062,7 @@ def create_report_svod():
         t = time.localtime()
         current_time = time.strftime('%H_%M_%S', t)
         wb.save(f'{path_to_end_folder_report}/Сводный отчет {current_time}.xlsx')
+
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except ValueError:
