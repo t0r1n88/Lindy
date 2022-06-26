@@ -105,7 +105,10 @@ def convert_date(cell):
         # print(cell)
         # # messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
-name_file_data_obraz_program = 'Для автозаполнения ОП_ПК.xlsx'
+
+
+# name_file_data_obraz_program = 'Для автозаполнения ОП_ПК.xlsx'
+name_file_data_obraz_program = 'Для автозаполнения ОП_ПК_организац метод обесп_ПЕН_БМР.xlsx'
 name_file_template_educ_program = 'Автошаблон_ПК_ЦОПП.docx'
 
 
@@ -155,7 +158,10 @@ unique_prepod_df.dropna(axis=0,how='any',inplace=True,subset=['ФИО_препо
 
 # Удаляем дубликаты уровней квалификации
 level_qual_prepod = all_prepod_df.copy()
+
 level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'], inplace=True, ignore_index=True)
+
+
 
 # Создаем и обрабатываем датафрейм  учебной программы
 up_df = base_up_df[

@@ -105,7 +105,8 @@ def convert_date(cell):
         # # messagebox.showerror('ЦОПП Бурятия', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
 
-name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО.xlsx'
+# name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО.xlsx'
+name_file_data_obraz_program_po = 'Для_автозаполнения_ОП_ПО_кейс_матрос спасатель.xlsx'
 name_file_template_educ_program_po = 'Автошаблон_ПО_ЦОПП.docx'
 
 path_to_end_folder_obraz_program_po= 'data'
@@ -168,7 +169,7 @@ up_df = base_up_df[
     ['Наименование_раздела', 'Трудоемкость', 'Лекции_час', 'Практики_час', 'СРС_час', 'Форма_контроля',
      'Уровень_квалификации']]
 up_df.dropna(axis=0, how='all', inplace=True)
-up_df.fillna('', inplace=True)
+up_df.fillna('-', inplace=True)
 
 # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации,3.3
 short_up_df = up_df[up_df['Наименование_раздела'] != 'ИТОГО']
