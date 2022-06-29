@@ -12,6 +12,7 @@ from tkinter import messagebox
 from tkinter import ttk
 import openpyxl
 from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.utils import get_column_letter, column_index_from_string
 from openpyxl.styles import Font
 from openpyxl.styles import Alignment
 from openpyxl.styles import Color, PatternFill, Font, Border
@@ -3130,7 +3131,7 @@ def create_general_table():
                                                     'Номер_паспорта_в_формате_111111': str,
                                                     'Серия_документа_о_ВО_СПО': str,
                                                     'Номер_документа_о_ВО_СПО': str})
-                    # Создаем промежуточный датафрейм с данными с листа ДПО
+                    # Создаем промежуточный датафрейм с данными с листа ПО
                     temp_po = pd.read_excel(os.path.join(dirpath, filename), sheet_name='ПО',
                                             dtype={'Гражданство_получателя_код_страны_по_ОКСМ': str,
                                                    'Серия_паспорта_совершеннолетнего_или_родителя_законного_представителя_в_формате_1111': str,
@@ -3231,13 +3232,15 @@ def create_general_table():
                     temp_po['Дата_выдачи_документа'] = temp_po['Дата_выдачи_документа'].apply(convert_date)
                     temp_po['Дата_рождения_получателя'] = temp_po['Дата_рождения_получателя'].apply(convert_date)
                     temp_po['Дата_выдачи_паспорта'] = temp_po['Дата_выдачи_паспорта'].apply(convert_date)
+                    # print(temp_po.shape)
 
                     # Проверяем состав колонок
                     temp_dpo_columns = set(temp_dpo.columns)
+
                     temp_po_columns = set(temp_po.columns)
-                    # Если есть разница то выдаем сообщение предупреждение
-                    diff_cols_dpo = dpo_template_cols - temp_dpo_columns
-                    diff_cols_po = po_template_cols - temp_po_columns
+                    # Если есть разница то выдаем сообщение предупреждение.Используем симметрическую разницу
+                    diff_cols_dpo = dpo_template_cols.symmetric_difference(temp_dpo_columns)
+                    diff_cols_po = po_template_cols.symmetric_difference(temp_po_columns)
 
                     if len(diff_cols_dpo) > 0:
                         messagebox.showerror('ЦОПП Бурятия',
@@ -3249,36 +3252,43 @@ def create_general_table():
 
                     # Добавляем промежуточные датафреймы в исходные
                     #
-
                     df_dpo = pd.concat([df_dpo, temp_dpo], ignore_index=True)
                     df_po = pd.concat([df_po, temp_po], ignore_index=True)
 
+        # Делам названия колонок текстовыми, на случай если все же попались числовые обозначения колонок
+        df_dpo.columns = list(map(str, df_dpo.columns))
+        df_po.columns = list(map(str, df_po.columns))
+
         # Код сохранения датафрейма в разные листы и сохранением форматирования  взят отсюда https://azzrael.ru/python-pandas-openpyxl-excel
         wb = openpyxl.load_workbook(name_file_template_table)
-
-        # Записываем лист ДПО
-
         for ir in range(0, len(df_dpo)):
             for ic in range(0, len(df_dpo.iloc[ir])):
                 wb['ДПО'].cell(2 + ir, 1 + ic).value = df_dpo.iloc[ir][ic]
 
-        wb['ДПО']['BO1'] = 'Текущий_возраст'
-        wb['ДПО']['BP1'] = 'Возрастная_категория_1ПК'
-        wb['ДПО']['BQ1'] = 'Дата_начала_курса'
-        wb['ДПО']['BR1'] = 'Дата_окончания_курса'
-        wb['ДПО']['BS1'] = 'Месяц_начала_курса'
-        wb['ДПО']['BT1'] = 'Месяц_окончания_курса'
+        # Здесь определяем крайний столбец, чтобы добавить генерируемые столбцы
+        dpo_max_column = wb['ДПО'].max_column
+
+        # Теперь нам нужно получить номер колонки меньший на 6 максимального значения, чтобы назявания колонок корректно встали
+        wb['ДПО'][f'{get_column_letter(dpo_max_column - 5)}1'] = 'Текущий_возраст'
+        wb['ДПО'][f'{get_column_letter(dpo_max_column - 4)}1'] = 'Возрастная_категория_1ПК'
+        wb['ДПО'][f'{get_column_letter(dpo_max_column - 3)}1'] = 'Дата_начала_курса'
+        wb['ДПО'][f'{get_column_letter(dpo_max_column - 2)}1'] = 'Дата_окончания_курса'
+        wb['ДПО'][f'{get_column_letter(dpo_max_column - 1)}1'] = 'Месяц_начала_курса'
+        wb['ДПО'][f'{get_column_letter(dpo_max_column)}1'] = 'Месяц_окончания_курса'
 
         # Записываем лист ПО
         for ir in range(0, len(df_po)):
             for ic in range(0, len(df_po.iloc[ir])):
                 wb['ПО'].cell(2 + ir, 1 + ic).value = df_po.iloc[ir][ic]
-        wb['ПО']['BJ1'] = 'Текущий_возраст'
-        wb['ПО']['BK1'] = 'Возрастная_категория_1ПО'
-        wb['ПО']['BL1'] = 'Дата_начала_курса'
-        wb['ПО']['BM1'] = 'Дата_окончания_курса'
-        wb['ПО']['BN1'] = 'Месяц_начала_курса'
-        wb['ПО']['BO1'] = 'Месяц_окончания_курса'
+        # Для ПО
+        po_max_column = wb['ПО'].max_column
+        #
+        wb['ПО'][f'{get_column_letter(po_max_column - 5)}1'] = 'Текущий_возраст'
+        wb['ПО'][f'{get_column_letter(po_max_column - 4)}1'] = 'Возрастная_категория_1ПО'
+        wb['ПО'][f'{get_column_letter(po_max_column - 3)}1'] = 'Дата_начала_курса'
+        wb['ПО'][f'{get_column_letter(po_max_column - 2)}1'] = 'Дата_окончания_курса'
+        wb['ПО'][f'{get_column_letter(po_max_column - 1)}1'] = 'Месяц_начала_курса'
+        wb['ПО'][f'{get_column_letter(po_max_column - 0)}1'] = 'Месяц_окончания_курса'
 
         # Получаем текущее время для того чтобы использовать в названии
 
