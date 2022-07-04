@@ -115,9 +115,9 @@ def create_educ_program():
         base_program_df = pd.read_excel(name_file_data_obraz_program, sheet_name='1. По программе', dtype=str)
         base_program_df.fillna('', inplace=True)
         # Убираем пробельные символы сначала и в конце каждой ячейки
-        base_program_df = base_program_df.applymap(str.strip,na_action='ignore')
+        base_program_df = base_program_df.applymap(str.strip, na_action='ignore')
         base_up_df = pd.read_excel(name_file_data_obraz_program, sheet_name='2. По дисциплинам_модулям', dtype=str)
-        base_up_df = base_up_df.applymap(str.strip,na_action='ignore')
+        base_up_df = base_up_df.applymap(str.strip, na_action='ignore')
 
         base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
                                                                   dayfirst=True, errors='coerce')
@@ -154,6 +154,7 @@ def create_educ_program():
 
         # Удаляем дубликаты уровней квалификации
         level_qual_prepod = all_prepod_df.copy()
+
         level_qual_prepod.drop_duplicates(subset=['Уровень_квалификации'], inplace=True, ignore_index=True)
 
         # Создаем и обрабатываем датафрейм  учебной программы
@@ -200,6 +201,7 @@ def create_educ_program():
 
 
 
+
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except FileNotFoundError:
@@ -219,7 +221,7 @@ def create_educ_program_po():
         base_program_df.fillna('', inplace=True)
 
         # Убираем пробельные символы сначала и в конце каждой ячейки
-        base_program_df = base_program_df.applymap(str.strip,na_action='ignore')
+        base_program_df = base_program_df.applymap(str.strip, na_action='ignore')
 
         # Обрабатываем колнку дата приказа Минтруда
         base_program_df['Дата_приказа_МИНТРУДА'] = pd.to_datetime(base_program_df['Дата_приказа_МИНТРУДА'],
@@ -249,7 +251,7 @@ def create_educ_program_po():
 
         # Создаем базовый датафрейм по дисциплинам и модулям
         base_up_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name='2. По дисциплинам_модулям', dtype=str)
-        base_up_df = base_up_df.applymap(str.strip,na_action='ignore')
+        base_up_df = base_up_df.applymap(str.strip, na_action='ignore')
         # Незаполненые ячейки заполняем пустой строкой
 
         # Создаем специализированные датафреймы
@@ -272,7 +274,7 @@ def create_educ_program_po():
             ['Наименование_раздела', 'Трудоемкость', 'Лекции_час', 'Практики_час', 'СРС_час', 'Форма_контроля',
              'Уровень_квалификации']]
         up_df.dropna(axis=0, how='all', inplace=True)
-        up_df.fillna('', inplace=True)
+        up_df.fillna('-', inplace=True)
 
         # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации,3.3
         short_up_df = up_df[up_df['Наименование_раздела'] != 'ИТОГО']
@@ -311,6 +313,7 @@ def create_educ_program_po():
         current_time = time.strftime('%H_%M_%S', t)
         doc.save(
             f'{path_to_end_folder_obraz_program_po}/Программа профессионального обучения {name_program} {current_time}.docx')
+
 
     except NameError:
         messagebox.showinfo('ЦОПП Бурятия', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
