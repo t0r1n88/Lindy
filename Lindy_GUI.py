@@ -151,15 +151,15 @@ def calculate_age(born):
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
     except TypeError:
         print(born)
-        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Проверьте правильность заполнения ячеек с датой!!!')
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Проверьте правильность заполнения колонки Дата_рождения_получателя')
         quit()
     except ValueError:
         print(f' Ошибка при подсчете текущего возраста ячейки {born}')
-        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Пустая ячейка с датой или некорректная запись!!!')
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Пустая ячейка с датой или некорректная запись в колонке Дата_рождения_получателя !!!')
         quit()
     except:
         print(f' Ошибка при подсчете текущего возраста ячейки {born}')
-        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Отсутствует или некорректная дата \nПроверьте файл!')
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Не удалось обработать данные в колонке Дата_рождения_получателя \nПроверьте файл!')
         quit()
 
 def check_date_columns(i, value):
@@ -183,7 +183,7 @@ def check_date_columns(i, value):
         else:
             return i
 
-def create_doc_convert_date(cell):
+def create_doc_convert_date(cell,*args):
     """
     Функция для конвертации даты при создании документов
     :param cell:
@@ -193,13 +193,13 @@ def create_doc_convert_date(cell):
         string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
         return string_date
     except ValueError:
-        return ''
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', f'Проверьте правильность заполнения ячеек с датой в колонке\n{args[0]}!!!')
     except TypeError:
         print(cell)
-        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Проверьте правильность заполнения ячеек с датой!!!')
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Проверьте правильность заполнения ячеек с датой в колонке\n{args[0]}!!!')
         quit()
 
-def convert_date(cell):
+def convert_date(cell,*args):
     """
     Функция для конвертации даты в формате 1957-05-10 в формат 10.05.1957(строковый)
     """
@@ -208,12 +208,11 @@ def convert_date(cell):
         string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
         return string_date
     except TypeError:
-        print(f' Ошибка при конвертации ячейки {cell}')
-        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Проверьте правильность заполнения ячеек с датой!!!')
+
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', f'Проверьте правильность заполнения ячеек с датой в колонке\n{args[0]}!!!')
         quit()
     except ValueError:
-        print(f' Ошибка при конвертации ячейки {cell}')
-        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', 'Пустая ячейка с датой или некорректная запись!!!')
+        messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10', f'Пустая ячейка с датой или некорректная запись в колонке\n{args[0]}!!!')
         quit()
 
 def extract_date_begin_course(cell:str):
@@ -393,12 +392,14 @@ def generate_docs_dpo():
         # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
         df['Дата_рождения_получателя'] = pd.to_datetime(df['Дата_рождения_получателя'],dayfirst=True,errors='coerce')
         df['Дата_выдачи_паспорта'] = pd.to_datetime(df['Дата_выдачи_паспорта'],dayfirst=True,errors='coerce')
+        df['Дата_выдачи_документа'] = pd.to_datetime(df['Дата_выдачи_документа'],dayfirst=True,errors='coerce')
 
 
         # Конвертируем
-        df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
+        df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date,args=['Дата_рождения_получателя'])
+        df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date,args=['Дата_выдачи_паспорта'])
+        df['Дата_выдачи_документа'] = df['Дата_выдачи_документа'].apply(convert_date,args=['Дата_выдачи_документа'])
 
-        df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
         #Добавляем столбец инициалы
         df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
 
@@ -493,15 +494,18 @@ def generate_docs_po():
         # Преобразуем столбцы с датой в правильный формат день.месяц.год, так пандас при считывании приводит к формату год месяц день
         df['Дата_рождения_получателя'] = pd.to_datetime(df['Дата_рождения_получателя'],dayfirst=True,errors='coerce')
         df['Дата_выдачи_паспорта'] = pd.to_datetime(df['Дата_выдачи_паспорта'],dayfirst=True,errors='coerce')
+        df['Дата_выдачи_документа'] = pd.to_datetime(df['Дата_выдачи_документа'], dayfirst=True, errors='coerce')
+
         if 'Дата_выдачи_свидетельства_о_рождении' in df.columns:
             # Это сделано чтобы не добавлять в прежние документы эту колонку
             df['Дата_выдачи_свидетельства_о_рождении'] = pd.to_datetime(df['Дата_выдачи_свидетельства_о_рождении'],dayfirst=True,errors='coerce')
-            df['Дата_выдачи_свидетельства_о_рождении'] = df['Дата_выдачи_свидетельства_о_рождении'].apply(convert_date)
+            df['Дата_выдачи_свидетельства_о_рождении'] = df['Дата_выдачи_свидетельства_о_рождении'].apply(convert_date,args=['Дата_выдачи_свидетельства_о_рождении'])
 
 
 
-        df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date)
-        df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date)
+        df['Дата_рождения_получателя'] = df['Дата_рождения_получателя'].apply(convert_date,args=['Дата_рождения_получателя'])
+        df['Дата_выдачи_паспорта'] = df['Дата_выдачи_паспорта'].apply(convert_date,args=['Дата_выдачи_паспорта'])
+        df['Дата_выдачи_документа'] = df['Дата_выдачи_документа'].apply(convert_date,args=['Дата_выдачи_документа'])
 
         # Добавляем столбец инициалы
         df['Инициалы'] = df['ФИО_именительный'].apply(create_initials)
@@ -631,7 +635,7 @@ def generate_docs_other():
         # Конвертируем в пригодный строковый формат
         for i in lst_date_columns:
             df.iloc[:, i] = pd.to_datetime(df.iloc[:, i],errors='coerce',dayfirst=True)
-            df.iloc[:, i] = df.iloc[:, i].apply(create_doc_convert_date)
+            df.iloc[:, i] = df.iloc[:, i].apply(create_doc_convert_date,args=[i])
 
 
         # Конвертируем датафрейм в список словарей
@@ -3226,13 +3230,13 @@ def create_general_table():
                         temp_po['Месяц_окончания_курса'] = np.nan
 
                     # Конвертируем  столбцы с датами в краткий формат
-                    temp_dpo['Дата_выдачи_документа'] = temp_dpo['Дата_выдачи_документа'].apply(convert_date)
-                    temp_dpo['Дата_рождения_получателя'] = temp_dpo['Дата_рождения_получателя'].apply(convert_date)
-                    temp_dpo['Дата_выдачи_паспорта'] = temp_dpo['Дата_выдачи_паспорта'].apply(convert_date)
+                    temp_dpo['Дата_выдачи_документа'] = temp_dpo['Дата_выдачи_документа'].apply(convert_date,args=['Дата_выдачи_документа'])
+                    temp_dpo['Дата_рождения_получателя'] = temp_dpo['Дата_рождения_получателя'].apply(convert_date,args=['Дата_рождения_получателя'])
+                    temp_dpo['Дата_выдачи_паспорта'] = temp_dpo['Дата_выдачи_паспорта'].apply(convert_date,args=['Дата_выдачи_паспорта'])
 
-                    temp_po['Дата_выдачи_документа'] = temp_po['Дата_выдачи_документа'].apply(convert_date)
-                    temp_po['Дата_рождения_получателя'] = temp_po['Дата_рождения_получателя'].apply(convert_date)
-                    temp_po['Дата_выдачи_паспорта'] = temp_po['Дата_выдачи_паспорта'].apply(convert_date)
+                    temp_po['Дата_выдачи_документа'] = temp_po['Дата_выдачи_документа'].apply(convert_date,args=['Дата_выдачи_документа'])
+                    temp_po['Дата_рождения_получателя'] = temp_po['Дата_рождения_получателя'].apply(convert_date,args=['Дата_рождения_получателя'])
+                    temp_po['Дата_выдачи_паспорта'] = temp_po['Дата_выдачи_паспорта'].apply(convert_date,args=['Дата_выдачи_паспорта'])
                     # print(temp_po.shape)
 
                     # Проверяем состав колонок
