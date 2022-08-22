@@ -425,12 +425,11 @@ def generate_docs_dpo():
                     doc = DocxTemplate(name_file_template_doc)
                     context = row
                     # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
+                    # Заполняем документ
 
                     doc.render(context)
-                    t = time.localtime()
-                    current_time = time.strftime('%H_%M_%S', t)
-
-                    doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
+                    # Сохраняем документ
+                    doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]}.docx')
 
             else:
                 # Список с созданными файлами
@@ -532,11 +531,8 @@ def generate_docs_po():
                         # Превращаем строку в список кортежей, где первый элемент кортежа это ключ а второй данные
 
                         doc.render(context)
-                        t = time.localtime()
-                        current_time = time.strftime('%H_%M_%S', t)
-
                         doc.save(
-                            f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]} от {current_time}.docx')
+                            f'{path_to_end_folder_doc}/{name_doc} {row["ФИО_именительный"]}.docx')
 
                 else:
                     # Список с созданными файлами
@@ -656,17 +652,15 @@ def generate_docs_other():
                     context = row
                     count += 1
 
-                    t = time.localtime()
-                    current_time = time.strftime('%H_%M_%S', t)
+
                     try:
                         if 'ФИО' in row:
                             doc.render(context)
 
-                            doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО"]} от {current_time}.docx')
+                            doc.save(f'{path_to_end_folder_doc}/{name_doc} {row["ФИО"]}.docx')
                         else:
                             doc.render(context)
-
-                            doc.save(f'{path_to_end_folder_doc}/{name_doc} {count} от {current_time}.docx')
+                            doc.save(f'{path_to_end_folder_doc}/{name_doc} {count}.docx')
                     except:
                         messagebox.showerror('Создание документов и отчетов ЦОПП версия 1.10',
                                              'Проверьте содержимое шаблона\nНе допускаются любые символы кроме _ в словах внутри фигурных скобок\nСлова должны могут быть разделены нижним подчеркиванием')
@@ -706,7 +700,7 @@ def generate_docs_other():
             current_time = time.strftime('%H_%M_%S', t)
             doc.save(
                 f'{path_to_end_folder_doc}/{name_doc} {current_time}.docx')
-        messagebox.showinfo('Создание документов и отчетов ЦОПП версия 1.10', 'Создание документов успешно завершено!')
+
     except NameError as e:
         messagebox.showinfo('Создание документов и отчетов ЦОПП версия 1.10', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     else:
