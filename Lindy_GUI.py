@@ -384,6 +384,7 @@ def generate_docs_dpo():
     Функция для создания ддокументов по ДПО
     :return:
     """
+
     try:
         # Получаем название для создаваемых документов
         name_doc = entry_name_file.get()
