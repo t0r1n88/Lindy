@@ -274,7 +274,9 @@ def create_educ_program_po():
 
 
         # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации
-        #df_up = df_up[df_up['Наименование_раздела'] != 'ИТОГО']
+        short_df_up = df_up[df_up['Наименование_раздела'] != 'ИТОГО']
+        short_df_up = short_df_up[short_df_up['Наименование_раздела'] != 'Итоговая аттестация']
+
 
 
         # получаем единичные значения из листа с данными
@@ -301,7 +303,7 @@ def create_educ_program_po():
 
         tech_df.dropna(thresh=2, inplace=True)  # очищаем от строк в которых не заполнены 2 колонки
 
-        tech_df['Разработчики_программы'] = tech_df['Разработчики_программы'].fillna('Не заполнено !!!')
+        tech_df['Разработчики_программы'] = tech_df['Разработчики_программы'].fillna('Не заполнено')
         # Очищаем от возможнных пробелов
         tech_df['Характеристика_технологии_обучения'] = tech_df['Характеристика_технологии_обучения'].apply(
             lambda x: x.strip())
@@ -327,12 +329,16 @@ def create_educ_program_po():
         context = data_program[0]
         # текстовые составные переменные
         context['Уровни_квалификации'] = ','.join(levels_qual)
-        context['Технологии_обучения'] = ','.join(educ_lst)
+        context['Технологии_обучения'] = ';\n'.join(educ_lst)
+
 
         # Добавляем датафреймы
         context['lst_tech'] = tech_df.to_dict('records')  # образовательные технологии
         context['up_lst'] = df_up.to_dict('records')  # учебный план
-        context['lst_dev'] = tech_df['Разработчики_программы'].tolist()
+        context['short_up_lst'] = short_df_up.to_dict('records')  # учебный план
+
+        lst_dev = [value for value in tech_df['Разработчики_программы'].tolist() if value != 'Не заполнено']
+        context['lst_dev'] = lst_dev
 
         doc = DocxTemplate(name_file_template_educ_program_po)
         # Создаем документ
