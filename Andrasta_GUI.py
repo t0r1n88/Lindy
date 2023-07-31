@@ -115,12 +115,12 @@ def convert_date(cell):
         return string_date
     except TypeError:
         print(cell)
-        messagebox.showerror('Андраста ver 1.82 Создание программ ПО', 'Проверьте правильность заполнения ячеек с датой!!!')
+        messagebox.showerror('Андраста ver 1.83 Создание программ ПО', 'Проверьте правильность заполнения ячеек с датой!!!')
         quit()
     except ValueError:
         pass
         # print(cell)
-        # # messagebox.showerror('Андраста ver 1.82 Создание программ ПО', 'Пустая ячейка с датой или некорректная запись!!!')
+        # # messagebox.showerror('Андраста ver 1.83 Создание программ ПО', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
 
 # def create_educ_program():
@@ -219,16 +219,16 @@ def convert_date(cell):
 #         doc.save(
 #             f'{path_to_end_folder_obraz_program}/Программа повышения квалификации {name_program} {current_time}.docx')
 #     except IndexError:
-#         messagebox.showerror('Андраста ver 1.82 Создание программ ПО', 'Заполните полностью строку 2 на листе 1.По программе!!!')
+#         messagebox.showerror('Андраста ver 1.83 Создание программ ПО', 'Заполните полностью строку 2 на листе 1.По программе!!!')
 #     except NameError:
-#         messagebox.showinfo('Андраста ver 1.82 Создание программ ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+#         messagebox.showinfo('Андраста ver 1.83 Создание программ ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 #     except FileNotFoundError:
 #         # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
-#         messagebox.showerror('Андраста ver 1.82 Создание программ ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+#         messagebox.showerror('Андраста ver 1.83 Создание программ ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
 #     except KeyError as e:
-#         messagebox.showerror('Андраста ver 1.82 Создание программ ПО', f'Не найдено название колонки {e.args}')
+#         messagebox.showerror('Андраста ver 1.83 Создание программ ПО', f'Не найдено название колонки {e.args}')
 #     else:
-#         messagebox.showinfo('Андраста ver 1.82 Создание программ ПО', 'Создание образовательной программы\nЗавершено!')
+#         messagebox.showinfo('Андраста ver 1.83 Создание программ ПО', 'Создание образовательной программы\nЗавершено!')
 
 def create_educ_program_po():
     """
@@ -274,7 +274,8 @@ def create_educ_program_po():
 
 
         # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации
-        df_up = df_up[df_up['Наименование_раздела'] != 'ИТОГО']
+        #df_up = df_up[df_up['Наименование_раздела'] != 'ИТОГО']
+
 
         # получаем единичные значения из листа с данными
         single_row_df = pd.read_excel(name_file_data_obraz_program_po, sheet_name=name_sheet_data, nrows=1,
@@ -312,6 +313,9 @@ def create_educ_program_po():
         tech_df['Уровни_квалификации'] = tech_df['Уровни_квалификации'].astype(int)
 
         # создаем переменную для уровней квалификации
+        educ_lst = tech_df['Технологии_обучения'].tolist()
+
+
         levels_qual = tech_df['Уровни_квалификации'].to_list()
         levels_qual = list(filter(lambda x: x != 0, levels_qual))
         levels_qual = list(map(str, levels_qual))
@@ -321,8 +325,9 @@ def create_educ_program_po():
         data_program = single_row_df.to_dict('records')
 
         context = data_program[0]
-
+        # текстовые составные переменные
         context['Уровни_квалификации'] = ','.join(levels_qual)
+        context['Технологии_обучения'] = ','.join(educ_lst)
 
         # Добавляем датафреймы
         context['lst_tech'] = tech_df.to_dict('records')  # образовательные технологии
@@ -345,21 +350,21 @@ def create_educ_program_po():
 
 
     except NameError:
-        messagebox.showerror('Андраста ver 1.82 Создание программ ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+        messagebox.showerror('Андраста ver 1.83 Создание программ ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
     except NotTotal:
-        messagebox.showerror('Андраста ver 1.82 Создание программ ПО','На первом листе в первой колонке отсутствует слово ИТОГО')
+        messagebox.showerror('Андраста ver 1.83 Создание программ ПО','На первом листе в первой колонке отсутствует слово ИТОГО')
     except FileNotFoundError:
         # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
-        messagebox.showerror('Андраста ver 1.82 Создание программ ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+        messagebox.showerror('Андраста ver 1.83 Создание программ ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     except KeyError as e:
-        messagebox.showerror('Андраста ver 1.82 Создание программ ПО', f'Не найдено название колонки {e.args}')
+        messagebox.showerror('Андраста ver 1.83 Создание программ ПО', f'Не найдено название колонки {e.args}')
     else:
-        messagebox.showinfo('Андраста ver 1.82 Создание программ ПО', 'Создание образовательной программы\nЗавершено!')
+        messagebox.showinfo('Андраста ver 1.83 Создание программ ПО', 'Создание образовательной программы\nЗавершено!')
 
 if __name__ == '__main__':
     window = Tk()
-    window.title('Андраста ver 1.82 Создание программ ПО')
+    window.title('Андраста ver 1.83 Создание программ ПО')
     window.geometry('700x600')
     window.resizable(False, False)
 
