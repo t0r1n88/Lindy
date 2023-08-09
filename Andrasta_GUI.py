@@ -14,7 +14,7 @@ import datetime
 pd.options.mode.chained_assignment = None  # default='warn'
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
-
+warnings.filterwarnings('ignore', category=FutureWarning, module='openpyxl')
 
 class NotTotal(BaseException):
     pass
@@ -114,14 +114,11 @@ def convert_date(cell):
         string_date = datetime.datetime.strftime(cell, '%d.%m.%Y')
         return string_date
     except TypeError:
-        print(cell)
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', 'Проверьте правильность заполнения ячеек с датой!!!')
-        quit()
+        return cell
+
     except ValueError:
-        pass
-        # print(cell)
-        # # messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', 'Пустая ячейка с датой или некорректная запись!!!')
-        # # quit()
+        return cell
+
 
 def create_educ_program_pk():
     """
@@ -187,6 +184,8 @@ def create_educ_program_pk():
         # # Очищаем от возможнных пробелов
         # single_row_df['Профессиональный_стандарт'] = single_row_df['Профессиональный_стандарт'].apply(
         #     lambda x: x.strip())
+
+        single_row_df.fillna('',inplace=True)
 
         # получаем датафрейм с технологиями обучения
         tech_df = pd.read_excel(name_file_data_obraz_program_pk, sheet_name=name_sheet_data, usecols='O:Q')
@@ -315,6 +314,8 @@ def create_educ_program_po():
         # Очищаем от возможнных пробелов
         single_row_df['Профессиональный_стандарт'] = single_row_df['Профессиональный_стандарт'].apply(
             lambda x: x.strip())
+
+        single_row_df.fillna('', inplace=True)
 
 
         # получаем датафрейм с технологиями обучения
