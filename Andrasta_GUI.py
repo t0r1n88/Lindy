@@ -115,12 +115,12 @@ def convert_date(cell):
         return string_date
     except TypeError:
         print(cell)
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', 'Проверьте правильность заполнения ячеек с датой!!!')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', 'Проверьте правильность заполнения ячеек с датой!!!')
         quit()
     except ValueError:
         pass
         # print(cell)
-        # # messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', 'Пустая ячейка с датой или некорректная запись!!!')
+        # # messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', 'Пустая ячейка с датой или некорректная запись!!!')
         # # quit()
 
 def create_educ_program_pk():
@@ -155,7 +155,7 @@ def create_educ_program_pk():
             raise NotTotal
         # если значение найдено то считываем нужное количество строк и  7 колонок
         df_up = pd.read_excel(name_file_data_obraz_program_pk, sheet_name=name_sheet_up, nrows=target_row,
-                              usecols='A:E', dtype=str)
+                              usecols='A:F', dtype=str)
 
         df_up.iloc[:, 1:5] = df_up.iloc[:, 1:5].applymap(convert_to_int)  # 1) Приводим к инту колонки 2-5
 
@@ -164,6 +164,8 @@ def create_educ_program_pk():
         # Очищаем от возможнных пробелов
         df_up['Наименование_раздела'] = df_up['Наименование_раздела'].apply(lambda x: x.strip())
 
+        df_up['Форма_промежуточного_итогового_контроля'] = df_up['Форма_промежуточного_итогового_контроля'].fillna('')
+
 
         # Создаем датафрейм учебной программы без учета строки ИТОГО для таблиц краткой аннотации
         short_df_up = df_up[df_up['Наименование_раздела'] != 'ИТОГО']
@@ -171,7 +173,7 @@ def create_educ_program_pk():
 
         # получаем единичные значения из листа с данными
         single_row_df = pd.read_excel(name_file_data_obraz_program_pk, sheet_name=name_sheet_data, nrows=1,
-                                      usecols='A:L')
+                                      usecols='A:N')
         single_row_df.iloc[:, 6] = single_row_df.iloc[:, 6].apply(convert_date)  # обрабатываем колонку с датой
 
         # Очищаем от лишнего поля которые заполняет пользователь
@@ -180,14 +182,14 @@ def create_educ_program_pk():
         # Очищаем от возможнных пробелов
         single_row_df['Наименование_программы'] = single_row_df['Наименование_программы'].apply(lambda x: x.strip())
 
-        single_row_df['Профессиональный_стандарт'] = single_row_df['Профессиональный_стандарт'].fillna(
-            'Не заполнено !!!')
-        # Очищаем от возможнных пробелов
-        single_row_df['Профессиональный_стандарт'] = single_row_df['Профессиональный_стандарт'].apply(
-            lambda x: x.strip())
+        # single_row_df['Профессиональный_стандарт'] = single_row_df['Профессиональный_стандарт'].fillna(
+        #     'Не заполнено !!!')
+        # # Очищаем от возможнных пробелов
+        # single_row_df['Профессиональный_стандарт'] = single_row_df['Профессиональный_стандарт'].apply(
+        #     lambda x: x.strip())
 
         # получаем датафрейм с технологиями обучения
-        tech_df = pd.read_excel(name_file_data_obraz_program_pk, sheet_name=name_sheet_data, usecols='M:O')
+        tech_df = pd.read_excel(name_file_data_obraz_program_pk, sheet_name=name_sheet_data, usecols='O:Q')
 
         tech_df.dropna(thresh=2, inplace=True)  # очищаем от строк в которых не заполнены 2 колонки
 
@@ -197,6 +199,8 @@ def create_educ_program_pk():
             lambda x: x.strip())
         tech_df['Технологии_обучения'] = tech_df['Технологии_обучения'].apply(lambda x: x.strip())
         tech_df['Разработчики_программы'] = tech_df['Разработчики_программы'].apply(lambda x: x.strip())
+
+        #
 
         # создаем список технологий
         educ_lst = tech_df['Технологии_обучения'].tolist()
@@ -232,16 +236,16 @@ def create_educ_program_pk():
 
 
     except IndexError:
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', 'Заполните полностью строку 2 на листе 1.По программе!!!')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', 'Заполните полностью строку 2 на листе 1.По программе!!!')
     except NameError:
-        messagebox.showinfo('Андраста ver 1.84 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+        messagebox.showinfo('Андраста ver 1.85 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except FileNotFoundError:
         # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     except KeyError as e:
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
     else:
-        messagebox.showinfo('Андраста ver 1.84 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
+        messagebox.showinfo('Андраста ver 1.85 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
 
 def create_educ_program_po():
     """
@@ -368,21 +372,21 @@ def create_educ_program_po():
 
 
     except NameError:
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
     except NotTotal:
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО','На первом листе в первой колонке отсутствует слово ИТОГО')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО','На первом листе в первой колонке отсутствует слово ИТОГО')
     except FileNotFoundError:
         # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     except KeyError as e:
-        messagebox.showerror('Андраста ver 1.84 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
+        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
     else:
-        messagebox.showinfo('Андраста ver 1.84 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
+        messagebox.showinfo('Андраста ver 1.85 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
 
 if __name__ == '__main__':
     window = Tk()
-    window.title('Андраста ver 1.84 Создание программ ПК и ПО и ПК')
+    window.title('Андраста ver 1.85 Создание программ ПК и ПО и ПК')
     window.geometry('700x600')
     window.resizable(False, False)
 
