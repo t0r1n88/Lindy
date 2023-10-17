@@ -1,6 +1,7 @@
 """
 Графический интерфейс для программы по  генерации документов ДПО и ПО
 """
+from generate_docs_copp import generate_docs # импортируем функцию генерации документов
 
 from tkinter import *
 from tkinter import filedialog
@@ -8,6 +9,7 @@ from tkinter import messagebox
 from tkinter import ttk
 import os
 import sys
+import logging
 
 
 def resource_path(relative_path):
@@ -21,6 +23,49 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 """
+Функции для создания контекстного меню(Копировать,вставить,вырезать)
+"""
+
+
+def make_textmenu(root):
+    """
+    Функции для контекстного меню( вырезать,копировать,вставить)
+    взято отсюда https://gist.github.com/angeloped/91fb1bb00f1d9e0cd7a55307a801995f
+    """
+    # эта штука делает меню
+    global the_menu
+    the_menu = Menu(root, tearoff=0)
+    the_menu.add_command(label="Вырезать")
+    the_menu.add_command(label="Копировать")
+    the_menu.add_command(label="Вставить")
+    the_menu.add_separator()
+    the_menu.add_command(label="Выбрать все")
+
+
+def callback_select_all(event):
+    """
+    Функции для контекстного меню( вырезать,копировать,вставить)
+    взято отсюда https://gist.github.com/angeloped/91fb1bb00f1d9e0cd7a55307a801995f
+    """
+    # select text after 50ms
+    window.after(50, lambda: event.widget.select_range(0, 'end'))
+
+
+def show_textmenu(event):
+    """
+    Функции для контекстного меню( вырезать,копировать,вставить)
+    взято отсюда https://gist.github.com/angeloped/91fb1bb00f1d9e0cd7a55307a801995f
+    """
+    e_widget = event.widget
+    the_menu.entryconfigure("Вырезать", command=lambda: e_widget.event_generate("<<Cut>>"))
+    the_menu.entryconfigure("Копировать", command=lambda: e_widget.event_generate("<<Copy>>"))
+    the_menu.entryconfigure("Вставить", command=lambda: e_widget.event_generate("<<Paste>>"))
+    the_menu.entryconfigure("Выбрать все", command=lambda: e_widget.select_range(0, 'end'))
+    the_menu.tk.call("tk_popup", the_menu, event.x_root, event.y_root)
+
+
+
+"""
 Функции для подготовки
 """
 def select_folder_template():
@@ -29,7 +74,7 @@ def select_folder_template():
     :return:
     """
     global glob_path_to_folder_template
-    path_to_folder_template = filedialog.askdirectory()
+    glob_path_to_folder_template = filedialog.askdirectory()
 
 def select_data_file():
     """
@@ -49,22 +94,36 @@ def select_end_folder():
     glob_path_to_end_folder = filedialog.askdirectory()
 
 
-def processing_generate_docs(path_to_folder_template:str,data_table:str,path_to_end_folder:str):
+def processing_generate_docs():
     """
-    path_to_folder_template: путь к папке с шаблонами
-    data_file: путь к таблице
-    path_to_end_folder: путь к конечной папке
+    Функция для генерации документов
     """
-    pass
+    dct_params = {} # словарь для дополнительных параметров
+    try:
+        name_course= str(entry_name_course.get()) # получаем название курса
+        begin_course = str(entry_begin_course.get()) # получаем дату начала
+        end_course = str(entry_end_course.get())  # получаем дату окончания
+
+        type_course = group_rb_type_course.get() # получаем значения тип курса ДПО или ПО
+
+        # создаем документы
+        generate_docs(glob_path_to_folder_template,glob_data_file,glob_path_to_end_folder,name_course=name_course,
+                      begin_course=begin_course,end_course=end_course,type_course=type_course)
+
+    except NameError:
+        messagebox.showerror('Веста Обработка таблиц и создание документов',
+                             f'Выберите файлы с данными и папку куда будет генерироваться файл')
+        logging.exception('AN ERROR HAS OCCURRED')
 
 
 
 if __name__ == '__main__':
     window = Tk()
     window.title('Линид Создание документов и отчетов ЦОПП версия 2.0')
-    window.geometry('700x970')
+    window.geometry('850x970')
     window.resizable(False, False)
-
+    # Добавляем контекстное меню в поля ввода
+    make_textmenu(window)
 
     # Создаем объект вкладок
 
@@ -98,7 +157,7 @@ if __name__ == '__main__':
     btn_choose_folder_template.grid(column=0, row=1, padx=10, pady=10)
 
     # Создаем кнопку выбора файла с данными
-    btn_choose_data_file= Button(frame_data_doc, text='2) Выберите файл', font=('Arial Bold', 20),
+    btn_choose_data_file= Button(frame_data_doc, text='2) Выберите файл с данными', font=('Arial Bold', 20),
                                        command=select_data_file)
     btn_choose_data_file.grid(column=0, row=2, padx=10, pady=10)
 
@@ -129,10 +188,10 @@ if __name__ == '__main__':
     label_name_course = Label(frame_dop_data,text='5) Введите название курса')
     label_name_course.grid(column=0,row=6,padx=2)
     # поле ввода
-    entry_name_course = Entry(frame_dop_data,textvariable=name_course,width=50)
+    entry_name_course = Entry(frame_dop_data,textvariable=name_course,width=70)
     entry_name_course.grid(column=0,row=7,padx=10)
     # пояснение
-    label_date_course = Label(frame_dop_data,text='6) Введите дату начала и дату окончания курса в формате ДД.ММ.ГГГГ\n'
+    label_date_course = Label(frame_dop_data,text='6) Введите даты начала и дату окончания курса в формате ДД.ММ.ГГГГ\n'
                                                    'Например 12.05.2023')
     label_date_course.grid(column=0,row=8,padx=2)
 
@@ -177,8 +236,8 @@ if __name__ == '__main__':
 
 
 
-
-
+    window.bind_class("Entry", "<Button-3><ButtonRelease-3>", show_textmenu)
+    window.bind_class("Entry", "<Control-a>", callback_select_all)
     window.mainloop()
 
 
