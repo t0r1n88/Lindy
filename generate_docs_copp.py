@@ -119,46 +119,24 @@ def generate_docs(path_to_folder_template:str,file_data:str,path_to_end_folder:s
     path_to_end_folder: путь к конечной папке
     dct_opti: словарь с доп параметрами название программы ,даты начала и конца курсов и т.д
     """
-    df = pd.read_excel(file_data,dtype=str)
-    lst_xlsx = [] # список для хранения шаблонов Excel
-    # Открывае шаблон ДПО ФИС ФРДО
-    lst_df = df.values.tolist() # превращаем в список списков
-    template_dpo_fis_frdo = openpyxl.load_workbook(f'{path_to_folder_template}/ДПО/ДПО_ФИС-ФРДО.xlsx')
-    first_sheet = template_dpo_fis_frdo.sheetnames[0]
-    start_row = 2
-    for row_data in lst_df:
-        for col, value in enumerate(row_data, 1):
-            template_dpo_fis_frdo[first_sheet].cell(row=start_row, column=col, value=value)
-        start_row += 1
-    for column in template_dpo_fis_frdo[first_sheet].columns:
-        max_length = 0
-        column_name = get_column_letter(column[0].column)
-        for cell in column:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(cell.value)
-            except:
-                pass
-        adjusted_width = (max_length + 2)
-        template_dpo_fis_frdo[first_sheet].column_dimensions[column_name].width = adjusted_width
-
-    template_dpo_fis_frdo.save(f'{path_to_end_folder}/ДПО ФИС-ФРДО для загрузки.xlsx')
+    df = pd.read_excel(file_data,sheet_name='ДПО',dtype=str)
+    df['Дата_выдачи_документа'] = pd.to_datetime(df['Дата_выдачи_документа'], errors='coerce',dayfirst=True)
+    df['Дата_рождения_получателя'] = pd.to_datetime(df['Дата_рождения_получателя'], errors='coerce',dayfirst=True)
+    lst_frdo_columns = ['','','','','','','','','','','','','','','',]  # Список колонок используемых в ФРДО
 
 
-    # with pd.ExcelWriter(f'{path_to_folder_template}/ДПО/ДПО_ФИС-ФРДО.xlsx',engine='openpyxl',mode='a') as writer:
-    #     template_dpo_fis_frdo = openpyxl.load_workbook(f'{path_to_folder_template}/ДПО/ДПО_ФИС-ФРДО.xlsx')
-    #     first_sheet = template_dpo_fis_frdo.sheetnames[0]
-    #     writer.book = template_dpo_fis_frdo
-    #
-    #
-    #
-    #
-    #     df.to_excel(writer,sheet_name=first_sheet,index=False,header=False,startrow=3)
-    #     writer.save()
-    # for row in dataframe_to_rows(df,index=False,header=False):
-    #     template_dpo_fis_frdo[first_sheet].append(row)
-    #
-    # # Устанавливаем автоширину для каждой колонки
+
+
+    # lst_xlsx = [] # список для хранения шаблонов Excel
+    # # Открывае шаблон ДПО ФИС ФРДО
+    # lst_df = df.values.tolist() # превращаем в список списков
+    # template_dpo_fis_frdo = openpyxl.load_workbook(f'{path_to_folder_template}/ДПО/ДПО_ФИС-ФРДО.xlsx')
+    # first_sheet = template_dpo_fis_frdo.sheetnames[0]
+    # start_row = 2
+    # for row_data in lst_df:
+    #     for col, value in enumerate(row_data, 1):
+    #         template_dpo_fis_frdo[first_sheet].cell(row=start_row, column=col, value=value)
+    #     start_row += 1
     # for column in template_dpo_fis_frdo[first_sheet].columns:
     #     max_length = 0
     #     column_name = get_column_letter(column[0].column)
@@ -170,16 +148,10 @@ def generate_docs(path_to_folder_template:str,file_data:str,path_to_end_folder:s
     #             pass
     #     adjusted_width = (max_length + 2)
     #     template_dpo_fis_frdo[first_sheet].column_dimensions[column_name].width = adjusted_width
+    #
     # template_dpo_fis_frdo.save(f'{path_to_end_folder}/ДПО ФИС-ФРДО для загрузки.xlsx')
 
 
-
-    # for dirpath,dirnames,filenames in os.walk(path_to_folder_template):
-    #     for filename in filenames:
-    #         if (filename.endswith('.xlsx') and not filename.startswith('~$')):
-    #             if f'{dirpath}/{filename}' != file_data: # проверяем чтобы файл с данными не попал в этот список
-    #                 lst_xlsx.append(f'{dirpath}/{filename}')
-    # print(lst_xlsx)
 
 
 
@@ -191,8 +163,7 @@ def generate_docs(path_to_folder_template:str,file_data:str,path_to_end_folder:s
 if __name__ == '__main__':
     path_folder_template_main = 'data/example/Шаблоны'
     # data_file_main = 'data/example/ДПО_Цифровые_инструменты_в_образовательной_среде_БРИЭТ_март.xlsx'
-    # data_file_main = 'data/example/в фрдо.xlsx'
-    data_file_main = 'data/example/Шаблоны/в фрдо.xlsx'
+    data_file_main = 'data/example/Тестовый вариант.xlsx'
     path_end_folder_main = 'data/example/result'
 
 
