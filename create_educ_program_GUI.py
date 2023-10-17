@@ -14,6 +14,9 @@ pd.options.mode.chained_assignment = None  # default='warn'
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
+"""
+Без кнопки выбора шаблона
+"""
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
