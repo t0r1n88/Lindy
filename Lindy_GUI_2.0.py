@@ -2,6 +2,7 @@
 Графический интерфейс для программы по  генерации документов ДПО и ПО
 """
 from generate_docs_copp import generate_docs # импортируем функцию генерации документов
+from preparation_list import prepare_list # импортируем функцию подготовки данных списка
 
 from tkinter import *
 from tkinter import filedialog
@@ -141,16 +142,9 @@ def processing_preparation_file():
     """
     Функция для генерации документов
     """
-    dct_params = {} # словарь для дополнительных параметров
     try:
-        # name_course= str(entry_name_course.get()) # получаем название курса
-        # begin_course = str(entry_begin_course.get()) # получаем дату начала
-        # end_course = str(entry_end_course.get())  # получаем дату окончания
+        prepare_list(glob_prep_file,glob_path_to_end_folder_prep)
 
-        type_course = group_rb_type_course.get() # получаем значения тип курса ДПО или ПО
-
-        # создаем документы
-        generate_docs(glob_path_to_folder_template,glob_data_file,glob_path_to_end_folder,type_course)
 
     except NameError:
         messagebox.showerror('Веста Обработка таблиц и создание документов',
