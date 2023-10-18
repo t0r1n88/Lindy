@@ -100,15 +100,57 @@ def processing_generate_docs():
     """
     dct_params = {} # словарь для дополнительных параметров
     try:
-        name_course= str(entry_name_course.get()) # получаем название курса
-        begin_course = str(entry_begin_course.get()) # получаем дату начала
-        end_course = str(entry_end_course.get())  # получаем дату окончания
+        # name_course= str(entry_name_course.get()) # получаем название курса
+        # begin_course = str(entry_begin_course.get()) # получаем дату начала
+        # end_course = str(entry_end_course.get())  # получаем дату окончания
 
         type_course = group_rb_type_course.get() # получаем значения тип курса ДПО или ПО
 
         # создаем документы
-        generate_docs(glob_path_to_folder_template,glob_data_file,glob_path_to_end_folder,name_course=name_course,
-                      begin_course=begin_course,end_course=end_course,type_course=type_course)
+        generate_docs(glob_path_to_folder_template,glob_data_file,glob_path_to_end_folder,type_course)
+
+    except NameError:
+        messagebox.showerror('Веста Обработка таблиц и создание документов',
+                             f'Выберите файлы с данными и папку куда будет генерироваться файл')
+        logging.exception('AN ERROR HAS OCCURRED')
+
+
+"""
+Функции для вкладки подготовка файлов
+"""
+def select_prep_file():
+    """
+    Функция для выбора файла который нужно преобразовать
+    :return:
+    """
+    global glob_prep_file
+    # Получаем путь к файлу
+    glob_prep_file = filedialog.askopenfilename(filetypes=(('Excel files', '*.xlsx'), ('all files', '*.*')))
+
+
+def select_end_folder_prep():
+    """
+    Функция для выбора папки куда будет сохранен преобразованный файл
+    :return:
+    """
+    global glob_path_to_end_folder_prep
+    glob_path_to_end_folder_prep = filedialog.askdirectory()
+
+
+def processing_preparation_file():
+    """
+    Функция для генерации документов
+    """
+    dct_params = {} # словарь для дополнительных параметров
+    try:
+        # name_course= str(entry_name_course.get()) # получаем название курса
+        # begin_course = str(entry_begin_course.get()) # получаем дату начала
+        # end_course = str(entry_end_course.get())  # получаем дату окончания
+
+        type_course = group_rb_type_course.get() # получаем значения тип курса ДПО или ПО
+
+        # создаем документы
+        generate_docs(glob_path_to_folder_template,glob_data_file,glob_path_to_end_folder,type_course)
 
     except NameError:
         messagebox.showerror('Веста Обработка таблиц и создание документов',
@@ -119,7 +161,7 @@ def processing_generate_docs():
 
 if __name__ == '__main__':
     window = Tk()
-    window.title('Линид Создание документов и отчетов ЦОПП версия 2.0')
+    window.title('Линди Создание документов и отчетов ЦОПП версия 2.0')
     window.geometry('850x970')
     window.resizable(False, False)
     # Добавляем контекстное меню в поля ввода
@@ -129,7 +171,51 @@ if __name__ == '__main__':
 
     tab_control = ttk.Notebook(window)
 
+    """
+    Создаем вкладку для предварительной обработки списка
+    """
     # Создаем вкладку создания документов по шаблону
+    tab_preparation= ttk.Frame(tab_control)
+    tab_control.add(tab_preparation, text='Подготовка файла')
+    tab_control.pack(expand=1, fill='both')
+
+    # размещаем виджеты на вкладке Подготовка файла
+    lbl_hello = Label(tab_preparation,
+                      text='Центр опережающей профессиональной подготовки Республики Бурятия\n'
+                           'Очистка от некорректных данных, поиск пропущенных значений,\n преобразование СНИЛС в формат ХХХ-ХХХ-ХХХ ХХ.')
+    lbl_hello.grid(column=0, row=0, padx=10, pady=25)
+
+    # Картинка . Пришлось переименовывать переменную, иначе картинка не отображалась
+    path_to_img_prep = resource_path('logo.png')
+    img_prep = PhotoImage(file=path_to_img_prep)
+    Label(tab_preparation,
+          image=img_prep
+          ).grid(column=1, row=0, padx=10, pady=25)
+
+    # Создаем область для того чтобы поместить туда подготовительные кнопки(выбрать файл,выбрать папку и т.п.)
+    frame_data_prep = LabelFrame(tab_preparation, text='Подготовка')
+    frame_data_prep.grid(column=0, row=1, padx=10)
+
+    # Создаем кнопку выбора файла с данными
+    btn_choose_prep_file= Button(frame_data_prep, text='1) Выберите файл', font=('Arial Bold', 20),
+                                       command=select_prep_file)
+    btn_choose_prep_file.grid(column=0, row=2, padx=10, pady=10)
+
+    # Создаем кнопку выбора конечной папки
+    btn_choose_end_folder_prep= Button(frame_data_prep, text='2) Выберите конечную папку', font=('Arial Bold', 20),
+                                       command=select_end_folder_prep)
+    btn_choose_end_folder_prep.grid(column=0, row=3, padx=10, pady=10)
+
+    # Создаем кнопку очистки
+    btn_choose_processing_prep= Button(frame_data_prep, text='3) Выполнить подготовку', font=('Arial Bold', 20),
+                                       command=processing_preparation_file)
+    btn_choose_processing_prep.grid(column=0, row=4, padx=10, pady=10)
+
+
+
+    """
+    Создаем вкладку создания документов по шаблону
+    """
     tab_create_doc = ttk.Frame(tab_control)
     tab_control.add(tab_create_doc, text='Создание документов')
     tab_control.pack(expand=1, fill='both')
@@ -168,49 +254,50 @@ if __name__ == '__main__':
 
     # Переключатель:вариант работы
     # Создаем переключатель
-    group_rb_type_course = IntVar()
+    group_rb_type_course = StringVar()
+    group_rb_type_course.set('ДПО') # значение по умолчанию
     # Создаем фрейм для размещения переключателей(pack и грид не используются в одном контейнере)
     frame_rb_type_course = LabelFrame(frame_data_doc, text='4) Выберите тип курса')
     frame_rb_type_course.grid(column=0, row=4, padx=10)
     #
     Radiobutton(frame_rb_type_course, text='ДПО', variable=group_rb_type_course,
-                value=0).pack()
+                value='ДПО').pack()
     Radiobutton(frame_rb_type_course, text='ПО', variable=group_rb_type_course,
-                value=1).pack()
+                value='ПО').pack()
 
-    frame_dop_data = LabelFrame(tab_create_doc,text='Введите дополнительные данные')
-    frame_dop_data.grid(column=0, row=5, padx=10)
-
-
-    # Создаем переменную для хранения названия программы
-    name_course = StringVar()
-    # пояснение
-    label_name_course = Label(frame_dop_data,text='5) Введите название курса')
-    label_name_course.grid(column=0,row=6,padx=2)
-    # поле ввода
-    entry_name_course = Entry(frame_dop_data,textvariable=name_course,width=70)
-    entry_name_course.grid(column=0,row=7,padx=10)
-    # пояснение
-    label_date_course = Label(frame_dop_data,text='6) Введите даты начала и дату окончания курса в формате ДД.ММ.ГГГГ\n'
-                                                   'Например 12.05.2023')
-    label_date_course.grid(column=0,row=8,padx=2)
-
-    # метки для полей ввода дат
-    label_begin_course = Label(frame_dop_data,text='Дата начала курса')
-    label_begin_course.grid(column=0,row=9,sticky='w',padx=2)
-
-    label_end_course = Label(frame_dop_data, text='Дата завершения курса')
-    label_end_course.grid(column=1, row=9, padx=2)
-
-
-    date_begin_course = StringVar() # переменная для начала курса
-    date_end_course = StringVar() # переменная для конца курса
-
-    entry_begin_course = Entry(frame_dop_data,textvariable=date_begin_course,width=15)
-    entry_begin_course.grid(column=0,sticky='w',row=10,padx=0)
-
-    entry_end_course = Entry(frame_dop_data, textvariable=date_end_course, width=15)
-    entry_end_course.grid(column=1, row=10, padx=0)
+    # frame_dop_data = LabelFrame(tab_create_doc,text='Введите дополнительные данные')
+    # frame_dop_data.grid(column=0, row=5, padx=10)
+    #
+    #
+    # # Создаем переменную для хранения названия программы
+    # name_course = StringVar()
+    # # пояснение
+    # label_name_course = Label(frame_dop_data,text='5) Введите название курса')
+    # label_name_course.grid(column=0,row=6,padx=2)
+    # # поле ввода
+    # entry_name_course = Entry(frame_dop_data,textvariable=name_course,width=70)
+    # entry_name_course.grid(column=0,row=7,padx=10)
+    # # пояснение
+    # label_date_course = Label(frame_dop_data,text='6) Введите даты начала и дату окончания курса в формате ДД.ММ.ГГГГ\n'
+    #                                                'Например 12.05.2023')
+    # label_date_course.grid(column=0,row=8,padx=2)
+    #
+    # # метки для полей ввода дат
+    # label_begin_course = Label(frame_dop_data,text='Дата начала курса')
+    # label_begin_course.grid(column=0,row=9,sticky='w',padx=2)
+    #
+    # label_end_course = Label(frame_dop_data, text='Дата завершения курса')
+    # label_end_course.grid(column=1, row=9, padx=2)
+    #
+    #
+    # date_begin_course = StringVar() # переменная для начала курса
+    # date_end_course = StringVar() # переменная для конца курса
+    #
+    # entry_begin_course = Entry(frame_dop_data,textvariable=date_begin_course,width=15)
+    # entry_begin_course.grid(column=0,sticky='w',row=10,padx=0)
+    #
+    # entry_end_course = Entry(frame_dop_data, textvariable=date_end_course, width=15)
+    # entry_end_course.grid(column=1, row=10, padx=0)
 
 
 

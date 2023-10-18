@@ -360,32 +360,58 @@ def clean_columns(df:pd.DataFrame,lst_columns:list)->pd.DataFrame:
     df[lst_columns] = df[lst_columns].apply(lambda x:x.strip)
     return df
 
+def processing_snils(snils):
+    """
+    Функция для приведения строки СНИЛС к виду ХХХ-ХХХ-ХХХ ХХ, в противном случае возвращается значение Ошибка
+    """
+    snils = str(snils)
+    result = re.findall(r'\d', snils)
+    if len(result) == 11:
+        first_group = ''.join(result[:3])
+        second_group = ''.join(result[3:6])
+        third_group = ''.join(result[6:9])
+        four_group = ''.join(result[9:11])
 
-def generate_docs(path_to_folder_template:str,file_data:str,path_to_end_folder:str,**kwargs):
+        out_snils = f'{first_group}-{second_group}-{third_group} {four_group}'
+        return out_snils
+    else:
+        return f'Неправильное значение СНИЛС {snils}'
+
+
+
+def generate_docs(path_to_folder_template:str,file_data:str,path_to_end_folder:str,type_course):
     """
     path_to_folder_template: путь к папке с шаблонами
     file_data: путь к таблице
     path_to_end_folder: путь к конечной папке
-    dct_opti: словарь с доп параметрами название программы ,даты начала и конца курсов и т.д
+    type_course: тип курса ДПО или ПО
     """
-    df = pd.read_excel(file_data,sheet_name='ДПО',dtype=str)
-    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)  # применяем strip, чтобы все данные корректно вставлялись
+    print(type_course)
 
+    df = pd.read_excel(file_data,sheet_name=type_course,dtype=str)
+    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)  # применяем strip, чтобы все данные корректно вставлялись
+    # Обрабатываем колонки с датами
     df['Дата_выдачи_документа'] = pd.to_datetime(df['Дата_выдачи_документа'], errors='coerce',dayfirst=True)
     df['Дата_рождения_получателя'] = pd.to_datetime(df['Дата_рождения_получателя'], errors='coerce',dayfirst=True)
+
     # Создаем объединенную колонку ФИО
     part_fio_columns = ['Фамилия_получателя','Имя_получателя','Отчество_получателя'] # названия колонок составляющих ФИО
-
     df['ФИО'] = df.apply(lambda row:' '.join(row[part_fio_columns]),axis=1)
-
     df = declension_fio_by_case(df,'ФИО')
 
 
+
+    # Обрабатываем колонку СНИЛС приводя данные там к виду ХХХ-ХХХ-ХХХ ХХ
+    df['СНИЛС'] = df['СНИЛС'].apply(processing_snils)
+
+
+    # TODO генерация файла ФИС -ФРДО
     # Словарь замены значений гражданства получателя. В ФИС ФРДО нужно использовать числовые значения
     dct_citizenship = {'Российская Федерация':'643','Азербайджан':'031','Армения':'051','Беларусь':'112','Казахстан':'398','Киргизия':'417','Молдова':'498',
                        'Таджикистан':'762','Туркменистан':'795','Узбекистан':'860','Украина':'804','Литва':'440','Латвия':'428','Эстония':'233',}
 
     df['Гражданство_получателя'] = df['Гражданство_получателя'].replace(dct_citizenship) # проводим замену.
+
 
 
 
@@ -437,5 +463,5 @@ if __name__ == '__main__':
     path_end_folder_main = 'data/example/result'
 
 
-    generate_docs(path_folder_template_main,data_file_main,path_end_folder_main,name_program='Аугметика',type_program='ДПО')
+    generate_docs(path_folder_template_main,data_file_main,path_end_folder_main,'ДПО')
     print('Lindy Booth!')
