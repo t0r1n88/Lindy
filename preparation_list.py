@@ -3,6 +3,7 @@
 Очистка некорректных данных, удаление лишних пробелов
 """
 import pandas as pd
+import numpy as np
 import openpyxl
 import datetime
 import re
@@ -111,6 +112,8 @@ def check_snils(snils):
     """
     Функция для приведения значений снилс в вид ХХХ-ХХХ-ХХХ ХХ
     """
+    if snils is np.nan:
+        return 'Не заполнено'
     snils = str(snils)
     result = re.findall(r'\d', snils) # ищем цифры
     if len(result) == 11:
@@ -122,7 +125,7 @@ def check_snils(snils):
         out_snils = f'{first_group}-{second_group}-{third_group} {four_group}'
         return out_snils
     else:
-        return f'Неправильное значение СНИЛС {snils}'
+        return f'Неправильное значение СНИЛС - {snils}'
 
 def prepare_inn_column(df:pd.DataFrame,lst_columns:list)->pd.DataFrame:
     """
@@ -140,9 +143,6 @@ def prepare_inn_column(df:pd.DataFrame,lst_columns:list)->pd.DataFrame:
         return df
 
     df[prepared_columns_lst] = df[prepared_columns_lst].applymap(check_inn) # обрабатываем инн
-    print(df[prepared_columns_lst])
-
-
     return df
 
 
@@ -150,15 +150,74 @@ def check_inn(inn):
     """
     Функция для приведения значений снилс в вид 12 цифр
     """
+    if inn is np.nan:
+        return 'Не заполнено'
     inn = str(inn)
     result = re.findall(r'\d', inn) # ищем цифры
     if len(result) == 12:
         return ''.join(result)
     else:
-        return f'Неправильное значение ИНН {inn}'
+        return f'Неправильное значение ИНН (ИНН физлица состоит из 12 цифр)- {inn}'
 
+def prepare_passport_column(df:pd.DataFrame,series_passport:str,number_passport:str)->pd.DataFrame:
+    """
+    Функция для обработки колонок серия и номер паспорта
+    df: датафрейм для обработки
+    series_passport: значение для поиска колонкок с содержащей серию паспорта
+    number_passport: значение для поиска колонкок с содержащей серию паспорта
+    """
+    prepared_columns_series_lst = [] # список для колонок содержащих слова серия паспорт
+    prepared_columns_number_lst = [] # список для колонок содержащих слова номер паспорт
+    pattern_series = re.compile(r"(?=.*серия)(?=.*паспорт)") # паттерн для серии паспорта
+    pattern_number = re.compile(r"(?=.*номер)(?=.*паспорт)") # паттерн для номера паспорта
+    for name_column in df.columns:
+        result_series = re.search(pattern_series,name_column.lower()) # ищем по паттерну серию
+        if result_series:
+            prepared_columns_series_lst.append(name_column)
+        result_number = re.search(pattern_number,name_column.lower()) # ищем по паттерну номер
+        if result_number:
+            prepared_columns_number_lst.append(name_column)
 
+    if len(prepared_columns_series_lst) != 0:
+        df[prepared_columns_series_lst] = df[prepared_columns_series_lst].applymap(check_series_passport)  # обрабатываем серию паспорта
 
+    if len(prepared_columns_number_lst) != 0:
+        df[prepared_columns_number_lst] = df[prepared_columns_number_lst].applymap(check_number_passport)  # обрабатываем номер паспорта
+
+    #     if inn_column in name_column.lower():
+    #         prepared_columns_series_lst.append(name_column)
+    # if len(prepared_columns_lst) == 0: # проверка на случай не найденных значений
+    #     return df
+    #
+    # df[prepared_columns_lst] = df[prepared_columns_lst].applymap(check_inn) # обрабатываем инн
+    # print(df[prepared_columns_lst])
+    return df
+
+def check_series_passport(series:str)->str:
+    """
+    Функция для проверки серии паспорта, должно быть 4 цифры
+    """
+    if series is np.nan:
+        return 'Не заполнено'
+    series = str(series)
+    result = re.findall(r'\d', series) # ищем цифры
+    if len(result) == 4:
+        return ''.join(result)
+    else:
+        return f'Неправильное значение серии паспорта (должно быть 4 цифры) - {series}'
+
+def check_number_passport(number:str)->str:
+    """
+    Функция для проверки номера паспорта, должно быть 6 цифр
+    """
+    if number is np.nan:
+        return 'Не заполнено'
+    number = str(number)
+    result = re.findall(r'\d', number) # ищем цифры
+    if len(result) == 6:
+        return ''.join(result)
+    else:
+        return f'Неправильное значение номера паспорта(должно быть 6 цифр) - {number}'
 
 
 def prepare_list(file_data:str,path_end_folder:str):
@@ -183,6 +242,11 @@ def prepare_list(file_data:str,path_end_folder:str):
     # обрабатываем колонки с ИНН
     part_inn_columns = ['инн']
     df = prepare_inn_column(df,part_inn_columns)
+
+    # обрабатываем данные паспорта
+    series_passport = 'серия паспорт'
+    number_passport = 'номер паспорт'
+    df = prepare_passport_column(df, series_passport,number_passport)
 
 
 
