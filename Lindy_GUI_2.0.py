@@ -147,7 +147,7 @@ def processing_preparation_file():
 
 
     except NameError:
-        messagebox.showerror('Веста Обработка таблиц и создание документов',
+        messagebox.showerror('Линди Создание документов и отчетов ЦОПП версия 2.0',
                              f'Выберите файлы с данными и папку куда будет генерироваться файл')
         logging.exception('AN ERROR HAS OCCURRED')
 
