@@ -2,9 +2,13 @@
 Скрипт для подготовки списка
 Очистка некорректных данных, удаление лишних пробелов
 """
+import time
+
 import pandas as pd
 import numpy as np
 import openpyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.utils import get_column_letter
 import datetime
 import re
 from tkinter import messagebox
@@ -184,13 +188,6 @@ def prepare_passport_column(df:pd.DataFrame,series_passport:str,number_passport:
     if len(prepared_columns_number_lst) != 0:
         df[prepared_columns_number_lst] = df[prepared_columns_number_lst].applymap(check_number_passport)  # обрабатываем номер паспорта
 
-    #     if inn_column in name_column.lower():
-    #         prepared_columns_series_lst.append(name_column)
-    # if len(prepared_columns_lst) == 0: # проверка на случай не найденных значений
-    #     return df
-    #
-    # df[prepared_columns_lst] = df[prepared_columns_lst].applymap(check_inn) # обрабатываем инн
-    # print(df[prepared_columns_lst])
     return df
 
 def check_series_passport(series:str)->str:
@@ -218,6 +215,38 @@ def check_number_passport(number:str)->str:
         return ''.join(result)
     else:
         return f'Неправильное значение номера паспорта(должно быть 6 цифр) - {number}'
+
+def prepare_phone_columns(df:pd.DataFrame,phone_text:str) ->pd.DataFrame:
+    """
+    Функция для очистки номеров телефонов от пробельных символов и букв
+    """
+    pattern = r'[a-zA-Zа-яА-Я\s.]'
+    prepared_phone_columns = [] # лист для колонок с телефонами
+    # собираем названия колонок содержащих слово телефон
+    for name_column in df.columns:
+        if phone_text in name_column.lower():
+            prepared_phone_columns.append(name_column)
+
+    if len(prepared_phone_columns) == 0:
+        return df
+
+    df[prepared_phone_columns] = df[prepared_phone_columns].applymap(lambda x:check_phone_number(x,pattern))
+    return df
+
+def check_phone_number(phone:str,pattern:str)->str:
+    """
+    Функция для очистки значения номера телефона от пробельных символов,букв и точки
+    """
+    if phone is np.nan:
+        return 'Не заполнено'
+    phone = str(phone)
+    clean_phone = re.sub(pattern,'',phone)
+    return clean_phone
+
+
+
+
+
 
 
 def prepare_list(file_data:str,path_end_folder:str):
@@ -248,12 +277,42 @@ def prepare_list(file_data:str,path_end_folder:str):
     number_passport = 'номер паспорт'
     df = prepare_passport_column(df, series_passport,number_passport)
 
+    # обрабатываем номера телефонов
+    phone = 'телефон'
+    df = prepare_phone_columns(df, phone)
 
 
 
 
 
-    df.to_excel(f'{path_end_folder}/Датафрейм.xlsx',index=False)
+    # сохраняем
+    t = time.localtime()
+    current_time = time.strftime('%H_%M_%S', t)
+    wb = openpyxl.Workbook() # создаем файл
+    #записываем в файл
+    for row in dataframe_to_rows(df,index=False,header=True):
+        wb['Sheet'].append(row)
+    #сохраняем по ширине колонок
+    for column in wb['Sheet'].columns:
+        max_length = 0
+        column_name = get_column_letter(column[0].column)
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        wb['Sheet'].column_dimensions[column_name].width = adjusted_width
+    wb.save(f'{path_end_folder}/Датафрейм {current_time}.xlsx')
+
+
+
+
+
+
+
+
 
 
 
