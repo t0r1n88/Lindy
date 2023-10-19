@@ -244,6 +244,27 @@ def check_phone_number(phone:str,pattern:str)->str:
     return clean_phone
 
 
+def prepare_email_columns(df:pd.DataFrame,second_option:str)->pd.DataFrame:
+    """
+    Функция для обработки колонок серия и номер паспорта
+    df: датафрейм для обработки
+    second_option: значение для поиска колонкок с содержащей слово e-mail
+    """
+    prepared_columns_email_lst = [] # список для колонок содержащих слова электрон почта e-mail
+    pattern_first_option = re.compile(r"(?=.*электрон)(?=.*почта)") # паттерн для слов электрон почта
+    for name_column in df.columns:
+        result_first_option = re.search(pattern_first_option,name_column.lower()) # ищем по паттерну электрон почта
+        if result_first_option:
+            prepared_columns_email_lst.append(name_column)
+        if second_option in name_column:
+            prepared_columns_email_lst.append(name_column)
+
+    if len(prepared_columns_email_lst) == 0:
+        return df
+    df[prepared_columns_email_lst] = df[prepared_columns_email_lst].fillna('Не заполнено')
+    df[prepared_columns_email_lst] = df[prepared_columns_email_lst].applymap(lambda x:re.sub(r'\s','',x))
+
+    return df
 
 
 
@@ -280,6 +301,10 @@ def prepare_list(file_data:str,path_end_folder:str):
     # обрабатываем номера телефонов
     phone = 'телефон'
     df = prepare_phone_columns(df, phone)
+
+    # очищаем email от пробельных символов
+    second_option = 'e-mail' # слова электрон и почта используются внутри функции
+    df = prepare_email_columns(df,second_option)
 
 
 
