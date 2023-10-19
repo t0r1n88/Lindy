@@ -163,17 +163,21 @@ def check_inn(inn):
     else:
         return f'Неправильное значение ИНН (ИНН физлица состоит из 12 цифр)- {inn}'
 
-def prepare_passport_column(df:pd.DataFrame,series_passport:str,number_passport:str)->pd.DataFrame:
+def prepare_passport_column(df:pd.DataFrame)->pd.DataFrame:
     """
     Функция для обработки колонок серия и номер паспорта
     df: датафрейм для обработки
     series_passport: значение для поиска колонкок с содержащей серию паспорта
     number_passport: значение для поиска колонкок с содержащей серию паспорта
+    code_passport: значение для поиска колонкок с содержащей код подразделения
+
     """
     prepared_columns_series_lst = [] # список для колонок содержащих слова серия паспорт
     prepared_columns_number_lst = [] # список для колонок содержащих слова номер паспорт
+    prepared_columns_code_lst = [] # список для колонок содержащих слова код подразд
     pattern_series = re.compile(r"(?=.*серия)(?=.*паспорт)") # паттерн для серии паспорта
     pattern_number = re.compile(r"(?=.*номер)(?=.*паспорт)") # паттерн для номера паспорта
+    pattern_code = re.compile(r"(?=.*код)(?=.*подразд)") # паттерн для кода подразделения
     for name_column in df.columns:
         result_series = re.search(pattern_series,name_column.lower()) # ищем по паттерну серию
         if result_series:
@@ -181,12 +185,19 @@ def prepare_passport_column(df:pd.DataFrame,series_passport:str,number_passport:
         result_number = re.search(pattern_number,name_column.lower()) # ищем по паттерну номер
         if result_number:
             prepared_columns_number_lst.append(name_column)
+        result_code =   re.search(pattern_code,name_column.lower()) # ищем по паттерну код подразделения
+        if result_code:
+            prepared_columns_code_lst.append(name_column)
+
 
     if len(prepared_columns_series_lst) != 0:
         df[prepared_columns_series_lst] = df[prepared_columns_series_lst].applymap(check_series_passport)  # обрабатываем серию паспорта
 
     if len(prepared_columns_number_lst) != 0:
         df[prepared_columns_number_lst] = df[prepared_columns_number_lst].applymap(check_number_passport)  # обрабатываем номер паспорта
+
+    if len(prepared_columns_code_lst) != 0:
+        df[prepared_columns_code_lst] = df[prepared_columns_code_lst].applymap(check_code_passport)  # обрабатываем код подразделения
 
     return df
 
@@ -215,6 +226,21 @@ def check_number_passport(number:str)->str:
         return ''.join(result)
     else:
         return f'Неправильное значение номера паспорта(должно быть 6 цифр) - {number}'
+
+def check_code_passport(code:str)->str:
+    """
+    Функция для проверки номера паспорта, должно быть 6 цифр
+    """
+    if code is np.nan:
+        return 'Не заполнено'
+    code = str(code)
+    result = re.findall(r'\d', code) # ищем цифры
+    if len(result) == 6:
+        first_group = ''.join(result[:3])
+        second_group = ''.join(result[3:6])
+        return f'{first_group}-{second_group}'
+    else:
+        return f'Неправильное значение кода подразделения(должно быть 6 цифр в формате XXX-XXX) - {code}'
 
 def prepare_phone_columns(df:pd.DataFrame,phone_text:str) ->pd.DataFrame:
     """
@@ -294,9 +320,7 @@ def prepare_list(file_data:str,path_end_folder:str):
     df = prepare_inn_column(df,part_inn_columns)
 
     # обрабатываем данные паспорта
-    series_passport = 'серия паспорт'
-    number_passport = 'номер паспорт'
-    df = prepare_passport_column(df, series_passport,number_passport)
+    df = prepare_passport_column(df)
 
     # обрабатываем номера телефонов
     phone = 'телефон'
