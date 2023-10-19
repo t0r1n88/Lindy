@@ -94,8 +94,7 @@ def prepare_snils(df:pd.DataFrame,snils:str)->pd.DataFrame:
         return df
 
     df[prepared_columns_lst] = df[prepared_columns_lst].applymap(check_snils)
-    print(df[prepared_columns_lst].columns)
-    print(df[prepared_columns_lst])
+
     return df
 
 def prepare_snils_copp(df:pd.DataFrame,snils:str)->pd.DataFrame:
