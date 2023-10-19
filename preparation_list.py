@@ -6,6 +6,7 @@ import pandas as pd
 import openpyxl
 import datetime
 import re
+from tkinter import messagebox
 
 def create_doc_convert_date(cell):
     """
@@ -79,7 +80,7 @@ def prepare_snils(df:pd.DataFrame,snils:str)->pd.DataFrame:
     snils: название снилс
     """
 
-    prepared_columns_lst = []  # список для колонок содержащих слово дата
+    prepared_columns_lst = []  # список для колонок содержащих слово снилс
     for name_column in df.columns:
         if snils in name_column.lower():
             prepared_columns_lst.append(name_column)
@@ -92,7 +93,17 @@ def prepare_snils(df:pd.DataFrame,snils:str)->pd.DataFrame:
     print(df[prepared_columns_lst])
     return df
 
+def prepare_snils_copp(df:pd.DataFrame,snils:str)->pd.DataFrame:
+    """
+    Функция для обработки колонок со снилс
+    df: датафрейм для обработки
+    snils: название снилс
+    """
+    if snils not in df.columns:
+        messagebox.showerror('','Не найдена колонка СНИЛС!!!')
 
+    df['СНИЛС'] =df['СНИЛС'].apply(check_snils)
+    return df
 
 
 
@@ -113,6 +124,42 @@ def check_snils(snils):
     else:
         return f'Неправильное значение СНИЛС {snils}'
 
+def prepare_inn_column(df:pd.DataFrame,lst_columns:list)->pd.DataFrame:
+    """
+    Функция для обработки колонок со снилс
+    df: датафрейм для обработки
+    lst_columns: список колонок с ИНН
+    """
+
+    prepared_columns_lst = [] # список для колонок содержащих слово дата
+    for inn_column in lst_columns:
+        for name_column in df.columns:
+            if inn_column in name_column.lower():
+                prepared_columns_lst.append(name_column)
+    if len(prepared_columns_lst) == 0: # проверка на случай не найденных значений
+        return df
+
+    df[prepared_columns_lst] = df[prepared_columns_lst].applymap(check_inn) # обрабатываем инн
+    print(df[prepared_columns_lst])
+
+
+    return df
+
+
+def check_inn(inn):
+    """
+    Функция для приведения значений снилс в вид 12 цифр
+    """
+    inn = str(inn)
+    result = re.findall(r'\d', inn) # ищем цифры
+    if len(result) == 12:
+        return ''.join(result)
+    else:
+        return f'Неправильное значение ИНН {inn}'
+
+
+
+
 
 def prepare_list(file_data:str,path_end_folder:str):
     """
@@ -130,8 +177,15 @@ def prepare_list(file_data:str,path_end_folder:str):
     df = prepare_date_column(df,part_date_columns)
 
     # обрабатываем колонки со снилс
-    snils = 'снилс'
-    df = prepare_snils(df, snils)
+    snils = 'СНИЛС'
+    df = prepare_snils_copp(df, snils)
+
+    # обрабатываем колонки с ИНН
+    part_inn_columns = ['инн']
+    df = prepare_inn_column(df,part_inn_columns)
+
+
+
 
 
 
