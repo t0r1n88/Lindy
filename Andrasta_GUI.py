@@ -225,6 +225,7 @@ def create_educ_program_pk():
         # сохраняем документ
         # название программы
         name_pk = single_row_df['Наименование_программы'].tolist()[0]
+        name_pk = re.sub(r'[\r\b\n\t<>:"?*|\\/]', '_', name_pk)
         t = time.localtime()
         current_time = time.strftime('%H_%M_%S', t)
         doc.save(
@@ -235,19 +236,19 @@ def create_educ_program_pk():
 
 
     except IndexError:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', 'Заполните полностью строку 2 на листе 1.По программе!!!')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО', 'Заполните полностью строку 2 на листе 1.По программе!!!')
     except NameError:
-        messagebox.showinfo('Андраста ver 1.85 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+        messagebox.showinfo('Андраста ver 1.86 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
     except FileNotFoundError:
         # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
-    except OSError:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО',
-                             f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+    # except OSError:
+    #     messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО',
+    #                          f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     except KeyError as e:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
     else:
-        messagebox.showinfo('Андраста ver 1.85 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
+        messagebox.showinfo('Андраста ver 1.86 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
 
 def create_educ_program_po():
     """
@@ -366,6 +367,7 @@ def create_educ_program_po():
         # сохраняем документ
         # название программы
         name_prof = single_row_df['Наименование_профессии'].tolist()[0]
+        name_prof = re.sub(r'[\r\b\n\t<>:"?*|\\/]', '_', name_prof)
         razr = single_row_df['Разряд'].tolist()[0]
         t = time.localtime()
         current_time = time.strftime('%H_%M_%S', t)
@@ -373,24 +375,24 @@ def create_educ_program_po():
             f'{path_to_end_folder_obraz_program_po}/Программа ПО {name_prof[:40]} {razr} разряда {current_time}.docx')
 
     except NameError:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО', f'Выберите шаблон,файл с данными и папку куда будут генерироваться файлы')
 
     except NotTotal:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО','На первом листе в первой колонке отсутствует слово ИТОГО')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО','На первом листе в первой колонке отсутствует слово ИТОГО')
     except FileNotFoundError:
         # сообщение на случай если путь до папки куда сохраняется файл слишком длинный
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО', f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     except OSError:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО',
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО',
                              f'Слишком длинный путь до сохраняемого файла!\nВыберите другую папку')
     except KeyError as e:
-        messagebox.showerror('Андраста ver 1.85 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
+        messagebox.showerror('Андраста ver 1.86 Создание программ ПК и ПО', f'Не найдено название колонки {e.args}')
     else:
-        messagebox.showinfo('Андраста ver 1.85 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
+        messagebox.showinfo('Андраста ver 1.86 Создание программ ПК и ПО', 'Создание образовательной программы\nЗавершено!')
 
 if __name__ == '__main__':
     window = Tk()
-    window.title('Андраста ver 1.85 Создание программ ПК и ПО и ПК')
+    window.title('Андраста ver 1.86 Создание программ ПК и ПО и ПК')
     window.geometry('700x600')
     window.resizable(False, False)
 
